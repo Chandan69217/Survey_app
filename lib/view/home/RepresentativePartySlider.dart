@@ -14,7 +14,7 @@ class RepresentativePartySlider extends StatelessWidget {
     },
     {
       'name': 'Aam Aadmi Party (AAP)',
-      'logo': 'assets/images/party/aap-logo.png',
+      'logo': 'assets/images/party/aap-logo.webp',
     },
     {
       'name': 'Communist Party of India (CPI)',
@@ -91,6 +91,7 @@ class RepresentativePartySlider extends StatelessWidget {
           SizedBox(
             height: 100,
             child: ListView.separated(
+              shrinkWrap: true,
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: parties.length,
@@ -135,13 +136,16 @@ class _PartySliderCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              Image.asset(
-                logoPath,
-                width: 36,
-                height: 36,
+              Expanded(
+                child: Image.asset(
+                  logoPath,
+                  width: 36,
+                  height: 36,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
+                flex: 3,
                 child: Text(
                   name,
                   style: const TextStyle(

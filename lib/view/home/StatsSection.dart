@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:survey_app/utilities/cust_colors.dart';
 
 class StatsSection extends StatelessWidget {
   const StatsSection({super.key});
@@ -6,7 +7,7 @@ class StatsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Color(0xFF123763),
+      color: CustColors.background1,
       child: Padding(
         padding: const EdgeInsets.only(top: 5,bottom: 10),
         child: Row(

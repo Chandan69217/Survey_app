@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:provider/provider.dart';
+import 'package:survey_app/model/AppUser.dart';
+import 'package:survey_app/utilities/cust_colors.dart';
+import 'package:survey_app/view/auth/CitizenLoginScreen.dart';
 import 'package:survey_app/view/home/slider/slider_screen.dart';
 import 'PublicChatDialog/PublicChatDialog.dart';
 import 'RepresentativePartySlider.dart';
@@ -12,84 +16,108 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: CustColors.background2,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF123763),
+        backgroundColor: CustColors.background1,
         centerTitle: true,
         title: Image.asset("assets/images/true-survey-logo.png", scale: 4.1),
+        actions: [
+      Consumer<AppUser>(
+      builder: (context, user, child) {
+        return user.isLogin ? Padding(
+          padding: const EdgeInsets.only(right: 12.0),
+          child: CircleAvatar(
+            child: Icon(Icons.person),
+          ),
+        ) :Padding(
+          padding: const EdgeInsets.only(right: 6.0),
+          child: TextButton(onPressed: (){
+            Navigator.of(context).push(MaterialPageRoute(builder: (context)=>CitizenLoginScreen()));
+          },
+            child: Text('Login'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+            ),
+          ),
+        );
+    },
+    ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(0.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 0),
-              FadeInAnimation(
-                delay: 0.5,
-                child: SizedBox(height: 180, child: SliderScreen()),
-              ),
-              SlideInAnimation(
-                direction: SlideDirection.right,
-                delay: 0.7,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-                  color: const Color(0xFF123763),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'ईमानदार और पारदर्शी समीक्षा से लोकतंत्र को मजबूत बनाएं — एक बेहतर और ताकतवर देश के लिए मिलकर कदम बढ़ाएं।',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(0.0),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 0),
+                FadeInAnimation(
+                  delay: 0.5,
+                  child: SizedBox(height: 220, child: SliderScreen()),
+                ),
+                SlideInAnimation(
+                  direction: SlideDirection.right,
+                  delay: 0.7,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                    color: const Color(0xFF123763),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'ईमानदार और पारदर्शी समीक्षा से लोकतंत्र को मजबूत बनाएं — एक बेहतर और ताकतवर देश के लिए मिलकर कदम बढ़ाएं।',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SlideInAnimation(
-                            direction: SlideDirection.left,
-                            delay: 0.9,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFFB800),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SlideInAnimation(
+                              direction: SlideDirection.left,
+                              delay: 0.9,
+                              child: ElevatedButton(
+                                onPressed: () {},
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFFB800),
+                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                                child: const Text(
+                                  "Explore Parties",
+                                  style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                            SlideInAnimation(
+                              direction: SlideDirection.right,
+                              delay: 1.1,
+                              child: OutlinedButton(
+                                onPressed: () {},
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.white),
                                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                              child: const Text(
-                                "Explore Parties",
-                                style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: const Text("Contact Us", style: TextStyle(fontSize: 12, color: Colors.white)),
                               ),
                             ),
-                          ),
-                          SlideInAnimation(
-                            direction: SlideDirection.right,
-                            delay: 1.1,
-                            child: OutlinedButton(
-                              onPressed: () {},
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.white),
-                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                              child: const Text("Contact Us", style: TextStyle(fontSize: 12, color: Colors.white)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              FadeInAnimation(delay: 1.3, child: StatsSection()),
-              const SizedBox(height: 10),
-              SlideInAnimation(direction: SlideDirection.up, delay: 1.5, child: const RepresentativeSection()),
-              FadeInAnimation(delay: 1.7, child: RepresentativePartySlider()),
-            ],
+                FadeInAnimation(delay: 1.3, child: StatsSection()),
+                const SizedBox(height: 10),
+                SlideInAnimation(direction: SlideDirection.up, delay: 1.5, child: const RepresentativeSection()),
+                FadeInAnimation(delay: 1.7, child: RepresentativePartySlider()),
+              ],
+            ),
           ),
         ),
       ),

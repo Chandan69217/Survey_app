@@ -1,26 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-
+import 'package:survey_app/main.dart';
+import 'package:survey_app/utilities/consts.dart';
 import '../home/homescreen.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
+
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
+    WidgetsBinding.instance.addPostFrameCallback((duration)async{
+      final bool isOnboarded =  prefs.getBool(Consts.isOnBoarded)??false;
+      Future.delayed(const Duration(seconds: 2), ()async{
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => isOnboarded ? HomeScreen() : OnboardingScreen()),
+        );
+      });
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -123,8 +131,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: ElevatedButton(
                     onPressed: () {
+                      print("Button actually pressed!");
                       if (_currentPage == _pages.length - 1) {
                         // Navigate to home screen
+                        prefs.setBool(Consts.isOnBoarded, true);
+                        print("Saved Onboarding: ${prefs.getBool(Consts.isOnBoarded)}");
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -177,6 +188,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
+
 }
 
 class OnboardingPage {
@@ -271,6 +283,6 @@ class OnboardingPageWidget extends StatelessWidget {
         return 1;
     }
   }
-}
 
+}
 
