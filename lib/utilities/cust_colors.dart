@@ -10,6 +10,7 @@ class CustColors{
   static const Color soft_indigo100 = Color(0xFF8a90d6);
   static const Color grey100 = Color(0xFFe5e7eb);
   static const Color grey200 = Color(0xFFf9f9fb);
+  static const Color navy_blue = Color(0xFF001a44);
   static const LinearGradient background_gradient = LinearGradient(
     colors: [
       const Color(0xFF123763), // base deep blue

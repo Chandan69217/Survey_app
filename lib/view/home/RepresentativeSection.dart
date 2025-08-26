@@ -147,6 +147,8 @@ class _RepresentativeSectionState extends State<RepresentativeSection> {
   }
 }
 
+
+
 class RepresentativeCard extends StatelessWidget {
   final String name;
   final String party;
@@ -267,6 +269,8 @@ class RepresentativeCard extends StatelessWidget {
       ),
     );
   }
+
+
 }
 
 

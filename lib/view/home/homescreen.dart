@@ -5,16 +5,20 @@ import 'package:survey_app/model/AppUser.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
 import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/view/auth/CitizenLoginScreen.dart';
+import 'package:survey_app/view/home/EmulatorMockup/EmulatorMockup.dart';
 import 'package:survey_app/view/home/ProfileScreen.dart';
+import 'package:survey_app/view/home/PublicRepresentative/PublicRepresentativeScreen.dart';
 import 'package:survey_app/view/home/slider/slider_screen.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 import 'PublicChatDialog/PublicChatDialog.dart';
+import 'PublicRepresentative/PublicRepresentativeSlider.dart';
 import 'RepresentativePartySlider.dart';
 import 'RepresentativeSection.dart';
 import 'StatsSection.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -122,9 +126,19 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                EmulatorMockup(),
                 FadeInAnimation(delay: 1.3, child: StatsSection()),
                 const SizedBox(height: 10),
-                SlideInAnimation(direction: SlideDirection.up, delay: 1.5, child: const RepresentativeSection()),
+                SlideInAnimation(
+                  direction: SlideDirection.left,delay: 1.5,
+                  child: PublicRepresentativeSlider(
+                    onPressed: ()async{
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PublicRepresentativeScreen()));
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SlideInAnimation(direction: SlideDirection.up, delay: 1.6, child: const RepresentativeSection()),
                 FadeInAnimation(delay: 1.7, child: RepresentativePartySlider()),
               ],
             ),
