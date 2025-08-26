@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:survey_app/main.dart';
 import 'package:survey_app/utilities/consts.dart';
 
 
 class AppUser with ChangeNotifier {
   bool isOnBoarded = false;
   bool performed = false;
-  String? accessToken;
-  String? name;
+  String? accessToken = 'N/A';
+  String? name = 'N/A';
   bool isStaff = false;
   bool isActive = false;
   bool isLogin = false;
-  String? photo;
+  String? photo = 'N/A';
 
 
   AppUser.fromPrefs(Map<String, dynamic> data) {
-    isOnBoarded = data[Consts.isOnBoarded];
-    performed = data[Consts.performed];
-    accessToken = data[Consts.accessToken];
-    name = data[Consts.name];
+    isOnBoarded = data[Consts.isOnBoarded]??false;
+    performed = data[Consts.performed]??false;
+    accessToken = data[Consts.accessToken]??'N/A';
+    name = data[Consts.name]??'N/A';
     isStaff = data[Consts.isStaff] ?? false;
     isActive = data[Consts.isActive] ?? false;
     isLogin = data[Consts.isLogin]??false;
-    photo = data[Consts.photo];
+    photo = data[Consts.photo]??'N/A';
   }
 
   AppUser();
@@ -45,6 +46,20 @@ class AppUser with ChangeNotifier {
     this.photo = photo ?? this.photo;
     this.isLogin = isLogin??this.isLogin;
     notifyListeners(); // 🔥 Notify all consumers
+  }
+
+  void reset()async{
+    this.isLogin = false;
+    this.photo = 'N/A';
+    this.performed = false;
+    this.name ='N/A';
+    this.accessToken = 'N/A';
+    this.isOnBoarded = true;
+    this.isStaff = false;
+    this.isActive = false;
+    await prefs.clear();
+    prefs.setBool(Consts.isOnBoarded, true);
+    notifyListeners();
   }
 
   Map<String, dynamic> toMap() {

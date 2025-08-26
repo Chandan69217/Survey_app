@@ -13,10 +13,10 @@ class CitizenSignUpScreen extends StatefulWidget {
   const CitizenSignUpScreen({super.key});
 
   @override
-  State<CitizenSignUpScreen> createState() => CitizenSignUpScreenState();
+  State<CitizenSignUpScreen> createState() => _CitizenSignUpScreenState();
 }
 
-class CitizenSignUpScreenState extends State<CitizenSignUpScreen> {
+class _CitizenSignUpScreenState extends State<CitizenSignUpScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
@@ -24,14 +24,15 @@ class CitizenSignUpScreenState extends State<CitizenSignUpScreen> {
   final TextEditingController _confirmPasswordController = TextEditingController();
   bool _passwordVisibility = true;
   bool _confirmPasswordVisibility = true;
-  static final ValueNotifier<bool> isContactNumberVerified = ValueNotifier<bool>(false);
+  String? _verifiedOTP;
+  final ValueNotifier<bool> _isContactNumberVerified = ValueNotifier<bool>(false);
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((duration){
-      isContactNumberVerified.value = false;
+      _isContactNumberVerified.value = false;
     });
   }
   @override
@@ -92,64 +93,76 @@ class CitizenSignUpScreenState extends State<CitizenSignUpScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-              
-                    // Name
-                    const Text(
-                      "Your Name",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _nameController,
-                      validator: (value){
-                        if(value == null || value.isEmpty){
-                          return 'Please Enter your name';
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        hintText: "Enter Your Name",
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-              
-                    // Contact
-                    const Text(
-                      "Contact No.",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ValueListenableBuilder(valueListenable: isContactNumberVerified,
+
+                    // Name and Contact ValueListener
+                    ValueListenableBuilder(valueListenable: _isContactNumberVerified,
                         builder: (context,value,child){
-                      return TextFormField(
-                        readOnly: value,
-                        validator: (value){
-                          if(value == null || value.isEmpty ){
-                            return 'Please your contact number';
-                          }
-                          if(value.length != 10){
-                            return 'Please enter valid number';
-                          }
-                          return null;
-                        },
-                        controller: _contactController,
-                        keyboardType: TextInputType.phone,
-                        maxLength: 10,
-                        decoration: InputDecoration(
-                            hintText: "Enter Contact No.",
-                            counterText: ''
-                        ),
-                      );
+                      if(!value){
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Name
+                            const Text(
+                              "Your Name",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              readOnly: value,
+                              controller: _nameController,
+                              validator: (value){
+                                if(value == null || value.isEmpty){
+                                  return 'Please Enter your name';
+                                }
+                                return null;
+                              },
+                              decoration: InputDecoration(
+                                hintText: "Enter Your Name",
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Contact
+                            const Text(
+                              "Contact No.",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              readOnly: value,
+                              validator: (value){
+                                if(value == null || value.isEmpty ){
+                                  return 'Please your contact number';
+                                }
+                                if(value.length != 10){
+                                  return 'Please enter valid number';
+                                }
+                                return null;
+                              },
+                              controller: _contactController,
+                              keyboardType: TextInputType.phone,
+                              maxLength: 10,
+                              decoration: InputDecoration(
+                                  hintText: "Enter Contact No.",
+                                  counterText: ''
+                              ),
+                            ),
+                          ],
+                        );
+                      }else{
+                        return SizedBox();
+                      }
                         }
                     ),
-              
-                    ValueListenableBuilder(valueListenable: isContactNumberVerified,
+
+                    // Password & confirm password ValueListener
+                    ValueListenableBuilder(valueListenable: _isContactNumberVerified,
                         builder: (context,value,child){
                       if(value){
                         return Column(
@@ -227,7 +240,7 @@ class CitizenSignUpScreenState extends State<CitizenSignUpScreen> {
                     const SizedBox(height: 28),
               
                     // Button
-                    _isLoading ? CustomCircularIndicator() :ValueListenableBuilder<bool>(valueListenable: isContactNumberVerified,
+                    _isLoading ? CustomCircularIndicator() :ValueListenableBuilder<bool>(valueListenable: _isContactNumberVerified,
                         builder: (context,value,child){
                       return SizedBox(
                         width: double.infinity,
@@ -297,7 +310,10 @@ class CitizenSignUpScreenState extends State<CitizenSignUpScreen> {
       if(performed){
         CustomMessageDialog.show(context, title: 'Success', message: message,onPressed: ()async{
           Navigator.of(context).pop();
-          VerifyOTPScreen.show(context,_contactController.text);
+          VerifyOTPScreen.show(context,_contactController.text,onVerified: (isVerified,otp){
+            _verifiedOTP = otp;
+            _isContactNumberVerified.value = isVerified;
+          });
         },buttonText: 'Continue');
       }else{
         CustomMessageDialog.show(context, title: 'Success', message: message,);
@@ -321,7 +337,7 @@ class CitizenSignUpScreenState extends State<CitizenSignUpScreen> {
     final data = await VerifyOTPService(context: context).register(
       name: _nameController.text,
       number: _contactController.text,
-      otp: VerifyOTPScreen.verifiedOTP??'',
+      otp: _verifiedOTP??'',
       password: _confirmPasswordController.text
     );
 

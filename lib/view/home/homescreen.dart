@@ -3,8 +3,11 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
 import 'package:survey_app/model/AppUser.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
+import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/view/auth/CitizenLoginScreen.dart';
+import 'package:survey_app/view/home/ProfileScreen.dart';
 import 'package:survey_app/view/home/slider/slider_screen.dart';
+import 'package:survey_app/widgets/custom_network_image.dart';
 import 'PublicChatDialog/PublicChatDialog.dart';
 import 'RepresentativePartySlider.dart';
 import 'RepresentativeSection.dart';
@@ -26,8 +29,15 @@ class HomeScreen extends StatelessWidget {
       builder: (context, user, child) {
         return user.isLogin ? Padding(
           padding: const EdgeInsets.only(right: 12.0),
-          child: CircleAvatar(
-            child: Icon(Icons.person),
+          child: GestureDetector(
+            onTap: ()async{
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfileScreen()));
+            },
+            child: CustomNetworkImage(
+              height: 45,
+              width: 45,
+              imageUrl: user.photo,
+            ),
           ),
         ) :Padding(
           padding: const EdgeInsets.only(right: 6.0),

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:survey_app/api_service/VerifyOTPService.dart';
 import 'package:survey_app/utilities/custom_dialog/CustomMessageDialog.dart';
 import 'package:survey_app/view/auth/CitizenSignUpScreen.dart';
+import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 
 class VerifyOTPScreen {
   static final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  static String? verifiedOTP = null;
-  static Future<void> show(BuildContext context,String number) {
+  // static String? verifiedOTP = null;
+  static bool _isLoading = false;
+  static Future<void> show(BuildContext context,String number,{Function(bool isVerified,String otp)? onVerified}) {
     final List<TextEditingController> _otpControllers = List.generate(6, (index)=>TextEditingController());
     return showModalBottomSheet(
       context: context,
@@ -123,11 +125,17 @@ class VerifyOTPScreen {
                         const SizedBox(height: 30),
 
                         // Verify Button
-                        SizedBox(
+                        _isLoading ?CustomCircularIndicator() : SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: (){
-                              _verifyOTP(context,number,_otpControllers);
+                            onPressed: ()async{
+                              refresh((){
+                                _isLoading = true;
+                              });
+                              await _verifyOTP(context,number,_otpControllers,onVerified: onVerified);
+                              refresh((){
+                                _isLoading = false;
+                              });
                             },
                             child: const Text(
                               "Verify OTP",
@@ -149,11 +157,12 @@ class VerifyOTPScreen {
     );
   }
 
-  static void _verifyOTP(BuildContext context,String number,List<TextEditingController> otpControllers)async {
+  static Future<bool> _verifyOTP(BuildContext context,String number,List<TextEditingController> otpControllers,{Function(bool isVerified,String otp)? onVerified})async {
 
     if(!(_formKey.currentState?.validate()??false)){
-      return;
+      return false;;
     }
+
     var otp = '';
     for(var val in otpControllers){
       otp += val.text;
@@ -173,9 +182,10 @@ class VerifyOTPScreen {
         onPressed: ()async{
           Navigator.of(context).pop();
           if(performed){
-            verifiedOTP = otp;
+            // verifiedOTP = otp;
             Navigator.of(context).pop();
-            CitizenSignUpScreenState.isContactNumberVerified.value = performed;
+            onVerified?.call(performed,otp);
+            // CitizenSignUpScreenState.isContactNumberVerified.value = performed;
           }
         }
       );
@@ -193,7 +203,10 @@ class VerifyOTPScreen {
       //   );
       // }
     }
+    return true;
     // Navigator.pop(context);
   }
+
+
 }
 

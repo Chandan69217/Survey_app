@@ -15,14 +15,14 @@ Future<void> main()async {
   WidgetsFlutterBinding.ensureInitialized();
   prefs = await SharedPreferences.getInstance();
   final data = {
-    Consts.isOnBoarded: prefs.getBool(Consts.isOnBoarded),
-    Consts.performed: prefs.getBool(Consts.performed),
-    Consts.accessToken: prefs.getString(Consts.accessToken),
-    Consts.name: prefs.getString(Consts.name),
-    Consts.isStaff: prefs.getBool(Consts.isStaff),
-    Consts.isActive: prefs.getBool(Consts.isActive),
-    Consts.photo: prefs.getString(Consts.photo),
-    Consts.isLogin : prefs.getBool(Consts.isLogin)
+    Consts.isOnBoarded: prefs.getBool(Consts.isOnBoarded)??false,
+    Consts.performed: prefs.getBool(Consts.performed)??false,
+    Consts.accessToken: prefs.getString(Consts.accessToken)??'N/A',
+    Consts.name: prefs.getString(Consts.name)??'N/A',
+    Consts.isStaff: prefs.getBool(Consts.isStaff)??false,
+    Consts.isActive: prefs.getBool(Consts.isActive)??false,
+    Consts.photo: prefs.getString(Consts.photo)??'N/A',
+    Consts.isLogin : prefs.getBool(Consts.isLogin)??false
   };
   runApp(
     // MyApp()

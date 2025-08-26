@@ -8,6 +8,7 @@ import 'package:survey_app/main.dart';
 import 'package:survey_app/model/AppUser.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
+import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/view/auth/CitizenSignUpScreen.dart';
 import 'package:survey_app/view/auth/ForgotPasswordScreen.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
@@ -301,30 +302,14 @@ class _CitizenLoginScreenState extends State<CitizenLoginScreen> {
             isLogin: true,
           );
 
+          SnackBarHelper.show(context, message);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(message),)
-          );
-          Navigator.of(context).pop();
+          Navigator.of(context).popUntil((route)=>route.isFirst);
         }else{
           final message = data['message']??'';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Center(
-                child: Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-              behavior: SnackBarBehavior.floating, // optional: makes it modern floating
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
+          SnackBarHelper.show(context, message);
         }
-      }else{
+      } else{
         handleApiResponse(context, response);
       }
     }catch(exception,trace){

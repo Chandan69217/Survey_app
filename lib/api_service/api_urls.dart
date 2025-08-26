@@ -4,4 +4,5 @@ class Urls{
   static const String login = '/api/public-user/login/';
   static const String verifyOTP = '/api/public-user/verify-otp/';
   static const String register = '/api/public-user/register/';
+  static const String resetPassword = '/api/public-user/reset-password/';
 }
