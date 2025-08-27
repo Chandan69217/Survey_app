@@ -5,4 +5,5 @@ class Urls{
   static const String verifyOTP = '/api/public-user/verify-otp/';
   static const String register = '/api/public-user/register/';
   static const String resetPassword = '/api/public-user/reset-password/';
+  static const String getProfileDetails = '/api/profile-details/';
 }

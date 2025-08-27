@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 
@@ -21,7 +22,7 @@ class _EmulatorMockupState extends State<EmulatorMockup>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
 
     _animation = Tween<double>(begin: -15, end: 15).animate(
@@ -63,8 +64,73 @@ class _EmulatorMockupState extends State<EmulatorMockup>
                 top: 45, // adjust according to your phone image
                 left: 30,
                 right: 30,
-                child: _SliderCard(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _SliderCard(),
+                    const SizedBox(height: 4,),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                      Image.asset('assets/images/vote.webp',width: 18,height: 18,fit: BoxFit.contain,),
+                      const SizedBox(width: 6,),
+                        Image.asset('assets/images/young-boy.webp',width: 18,height: 18,fit: BoxFit.contain,),
+                      const SizedBox(width: 6,),
+                        Image.asset('assets/images/woman.webp',width: 18,height: 18,fit: BoxFit.contain,),
+                    ],),
+                    const SizedBox(height: 8,),
+                    Text('वादों का नहीं, अब वोटिंग होगा काम के आधार पर !',style: TextStyle(color: Colors.blue,fontSize: 10,overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold),maxLines: 2,textAlign: TextAlign.center,),
+                    const SizedBox(height: 4,),
+                    Text('न भाषण, न बहाने – जनता मांगे प्रगति के प्रमाण।', style: TextStyle(color: Colors.green,fontSize: 10,overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold),textAlign: TextAlign.center,),
+                    const SizedBox(height: 4,),
+                    Text('मतदान से पहले, सच्चाई जानना ज़रूरी है।', style: TextStyle(color: Colors.red,fontSize: 10,overflow: TextOverflow.ellipsis,fontWeight: FontWeight.bold),textAlign: TextAlign.center,),
+                    const SizedBox(height: 8.0,),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8,vertical: 12),
+                      width: double.infinity,
+                      height: 95,
+                      decoration: BoxDecoration(
+                        color: Colors.white70,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue,)
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(2),
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
+                              borderRadius: BorderRadius.circular(4.0),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Icon(Iconsax.wallet,size: 12,color:Colors.white,),
+                                Text('ELECTION TIME',style: TextStyle(fontWeight: FontWeight.w700,fontSize: 11,color: Colors.white),),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10,),
+                          Text('कोई चुनाव विवरण उपलब्ध नहीं है',style: TextStyle(overflow: TextOverflow.ellipsis,fontSize: 12),maxLines: 2,textAlign: TextAlign.center,)
+                        ],
+                      ),
+                    ),
+
+                  ],
+                ),
               ),
+              Positioned(
+                bottom: 30,
+                  child: Container(
+                width: 60,
+                height: 3,
+                decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(12)
+                ),
+              ))
             ],
           ),
         ),
@@ -137,7 +203,7 @@ class _SliderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CarouselSlider(
       options: CarouselOptions(
-        height: 70,
+        height: 90,
         viewportFraction: 1,
         autoPlay: true,
         autoPlayInterval: const Duration(seconds: 3),
@@ -150,16 +216,16 @@ class _SliderCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             CustomNetworkImage(
-              width: 40,
-              height:40,
+              width: 50,
+              height:50,
               borderRadius: BorderRadius.circular(60),
               imageUrl: i['photoUrl']??'',
               fit: BoxFit.cover,
             ),
             const SizedBox(height: 2,),
-            Text(i['name']??'N/A',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 8),),
+            Text(i['name']??'N/A',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 10,overflow: TextOverflow.ellipsis),maxLines: 1,),
             const SizedBox(height: 2,),
-            Text(i['nara']??'N/A',style: TextStyle(fontSize: 8),),
+            Text(i['nara']??'N/A',style: TextStyle(fontSize: 10,overflow: TextOverflow.ellipsis),maxLines: 1,),
           ],
         );
       }).toList(),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:survey_app/model/AppUser.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
@@ -16,10 +17,14 @@ import 'RepresentativePartySlider.dart';
 import 'RepresentativeSection.dart';
 import 'StatsSection.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,36 +33,37 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: CustColors.background1,
         centerTitle: true,
         title: Image.asset("assets/images/true-survey-logo.png", scale: 4.1),
-        actions: [
-      Consumer<AppUser>(
-      builder: (context, user, child) {
-        return user.isLogin ? Padding(
-          padding: const EdgeInsets.only(right: 12.0),
-          child: GestureDetector(
-            onTap: ()async{
-              Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfileScreen()));
-            },
-            child: CustomNetworkImage(
-              height: 45,
-              width: 45,
-              imageUrl: user.photo,
-            ),
-          ),
-        ) :Padding(
-          padding: const EdgeInsets.only(right: 6.0),
-          child: TextButton(onPressed: (){
-            Navigator.of(context).push(MaterialPageRoute(builder: (context)=>CitizenLoginScreen()));
-          },
-            child: Text('Login'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-            ),
-          ),
-        );
-    },
-    ),
-        ],
+        //     actions: [
+        //   Consumer<AppUser>(
+        //   builder: (context, user, child) {
+        //     return user.isLogin ? Padding(
+        //       padding: const EdgeInsets.only(right: 12.0),
+        //       child: GestureDetector(
+        //         onTap: ()async{
+        //           Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfileScreen()));
+        //         },
+        //         child: CustomNetworkImage(
+        //           height: 45,
+        //           width: 45,
+        //           imageUrl: user.photo,
+        //         ),
+        //       ),
+        //     ) :Padding(
+        //       padding: const EdgeInsets.only(right: 6.0),
+        //       child: TextButton(onPressed: (){
+        //         Navigator.of(context).push(MaterialPageRoute(builder: (context)=>CitizenLoginScreen()));
+        //       },
+        //         child: Text('Login'),
+        //         style: TextButton.styleFrom(
+        //           foregroundColor: Colors.white,
+        //         ),
+        //       ),
+        //     );
+        // },
+        // ),
+        //     ],
       ),
+      drawer: _drawerUI(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(0.0),
@@ -74,11 +80,12 @@ class HomeScreen extends StatelessWidget {
                   delay: 0.7,
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     color: const Color(0xFF123763),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        const SizedBox(height: 20),
                         const Text(
                           'ईमानदार और पारदर्शी समीक्षा से लोकतंत्र को मजबूत बनाएं — एक बेहतर और ताकतवर देश के लिए मिलकर कदम बढ़ाएं।',
                           textAlign: TextAlign.center,
@@ -98,12 +105,22 @@ class HomeScreen extends StatelessWidget {
                               child: ElevatedButton(
                                 onPressed: () {},
                                 style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFFB800),
-                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                                  backgroundColor: const Color(0xFFFFB800),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
                                 child: const Text(
                                   "Explore Parties",
-                                  style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
@@ -114,10 +131,21 @@ class HomeScreen extends StatelessWidget {
                                 onPressed: () {},
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(color: Colors.white),
-                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
-                                child: const Text("Contact Us", style: TextStyle(fontSize: 12, color: Colors.white)),
+                                child: const Text(
+                                  "Contact Us",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -130,15 +158,24 @@ class HomeScreen extends StatelessWidget {
                 FadeInAnimation(delay: 1.3, child: StatsSection()),
                 const SizedBox(height: 10),
                 SlideInAnimation(
-                  direction: SlideDirection.left,delay: 1.5,
+                  direction: SlideDirection.left,
+                  delay: 1.5,
                   child: PublicRepresentativeSlider(
-                    onPressed: ()async{
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PublicRepresentativeScreen()));
+                    onPressed: () async {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => PublicRepresentativeScreen(),
+                        ),
+                      );
                     },
                   ),
                 ),
                 const SizedBox(height: 10),
-                SlideInAnimation(direction: SlideDirection.up, delay: 1.6, child: const RepresentativeSection()),
+                SlideInAnimation(
+                  direction: SlideDirection.up,
+                  delay: 1.6,
+                  child: const RepresentativeSection(),
+                ),
                 FadeInAnimation(delay: 1.7, child: RepresentativePartySlider()),
               ],
             ),
@@ -177,12 +214,124 @@ class HomeScreen extends StatelessWidget {
                 builder: (context) => const PublicChatDialog(),
               );
             },
-
           ),
         ],
       ),
     );
   }
+
+  Drawer _drawerUI() {
+    return Drawer(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: EdgeInsets.fromLTRB(12,12,12,4),
+            height: 300,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: CustColors.background1,
+            ),
+            child: SafeArea(
+                child: Consumer<AppUser>(
+                  builder: (BuildContext context, AppUser value, Widget? child) {
+                    return  value.isLogin ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        CustomNetworkImage(
+                          height: 130,
+                          width: 130,
+                          imageUrl: value.photo,
+                        ),
+                        const SizedBox(height: 4.0,),
+                        Text(value.name??'N/A',style: TextStyle(fontSize: 18,color: Colors.white),),
+                        const SizedBox(height: 4,),
+                        OutlinedButton.icon(
+                          onPressed: ()async{
+                            Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfileScreen()));
+                          },
+                          label: Text('View Profile'),
+                          icon: Icon(Iconsax.profile_circle),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.deepOrange,
+                          ),
+                        )
+                      ],
+                    ) : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () async{
+                            Navigator.of(context).push(MaterialPageRoute(builder: (context)=>CitizenLoginScreen()));
+                          },
+                          icon: Icon(Icons.login),
+                          label: Text("Login"),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.blueAccent,
+                            side: BorderSide(
+                              color: Colors.pink
+                            )
+                          ),
+                        ),
+                        const SizedBox(height: 8,),
+                        Text('Login to True Survey',style: TextStyle(color: Colors.white70,fontSize: 18),),
+                      ],
+                    );
+                  },
+                ),
+            ),
+          ),
+          ListView(shrinkWrap: true, 
+              padding: EdgeInsets.all(12),
+              children: [
+                _buildInfoTile('Political Party', Iconsax.people,color: Colors.indigo),
+                _buildInfoTile('Candidate', Iconsax.personalcard,color: Colors.orange),
+                _buildInfoTile('Legendary Team', Iconsax.profile_2user,color: Colors.purple),
+                _buildInfoTile('Contact', Iconsax.message,color: Colors.green),
+                _buildInfoTile('About', Iconsax.info_circle,color: Colors.blue),
+                const SizedBox(height: 20,),
+                // Logout Button
+            Consumer<AppUser>(
+              builder: (BuildContext context, AppUser value, Widget? child) {
+                if(value.isLogin){
+                  return ElevatedButton.icon(
+                    onPressed: () {
+                      context.read<AppUser>().reset();
+                      SnackBarHelper.show(context, 'Log Out Successfully');
+                      // Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.logout),
+                    label: const Text("Logout"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                }else{
+                  return const SizedBox();
+                }
+              },
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoTile(String title, IconData icon,{VoidCallback? onTap,Color? color = Colors.indigo}) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: color),
+      title: Text(title),
+    );
+  }
+
 }
 
 // Animation helper classes
@@ -192,11 +341,7 @@ class FadeInAnimation extends StatelessWidget {
   final Widget child;
   final double delay;
 
-  const FadeInAnimation({
-    super.key,
-    required this.child,
-    this.delay = 0.0,
-  });
+  const FadeInAnimation({super.key, required this.child, this.delay = 0.0});
 
   @override
   Widget build(BuildContext context) {
@@ -205,10 +350,7 @@ class FadeInAnimation extends StatelessWidget {
       duration: Duration(milliseconds: (500 + delay * 1000).toInt()),
       curve: Curves.easeInOut,
       builder: (BuildContext context, double value, Widget? child) {
-        return Opacity(
-          opacity: value,
-          child: child,
-        );
+        return Opacity(opacity: value, child: child);
       },
       child: child,
     );
@@ -247,15 +389,14 @@ class SlideInAnimation extends StatelessWidget {
       duration: Duration(milliseconds: (600 + delay * 1000).toInt()),
       curve: Curves.easeOutQuart,
       builder: (BuildContext context, Offset value, Widget? child) {
-        return Transform.translate(
-          offset: value,
-          child: child,
-        );
+        return Transform.translate(offset: value, child: child);
       },
       child: child,
     );
   }
-} void _showRaiseProblemDialog(BuildContext context) {
+}
+
+void _showRaiseProblemDialog(BuildContext context) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -312,7 +453,10 @@ class SlideInAnimation extends StatelessWidget {
                 // Handle file selection
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(10),
@@ -341,7 +485,10 @@ class SlideInAnimation extends StatelessWidget {
                     Navigator.pop(context);
                   },
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                   child: const Text('Cancel'),
                 ),
@@ -351,12 +498,17 @@ class SlideInAnimation extends StatelessWidget {
                     // Handle submit
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Problem submitted successfully')),
+                      const SnackBar(
+                        content: Text('Problem submitted successfully'),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
