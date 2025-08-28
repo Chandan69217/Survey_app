@@ -89,7 +89,7 @@ class RepresentativePartySlider extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 100,
+            height: 70,
             child: ListView.separated(
               shrinkWrap: true,
               scrollDirection: Axis.horizontal,

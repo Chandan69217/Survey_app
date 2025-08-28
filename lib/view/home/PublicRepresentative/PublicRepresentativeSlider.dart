@@ -1,35 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:survey_app/api_service/PoliticianDetailsAPI.dart';
+import 'package:survey_app/utilities/cust_colors.dart';
+import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 
 
 import 'PublicRepresentativeScreen.dart';
 
 class PublicRepresentativeSlider extends StatelessWidget {
   final VoidCallback? onPressed;
-  final List<Map<String, String>> representatives =  [
-    {
-      "name": "John Doe",
-      "party": "Democratic Party",
-      "role": "MLA",
-      "desc": "Committed to education and healthcare reforms.",
-      "imageUrl": "https://picsum.photos/400/200",
-      "avatarUrl": "https://picsum.photos/50",
-      "rating": "4.5",
-      "comments": "120",
-      "performance": "80%",
-    },
-    {
-      "name": "Jane Smith",
-      "party": "Republic Party",
-      "role": "MP",
-      "desc": "Working towards sustainable energy and jobs.",
-      "imageUrl": "https://picsum.photos/400/201",
-      "avatarUrl": "https://picsum.photos/51",
-      "rating": "4.2",
-      "comments": "95",
-      "performance": "75%",
-    },
-  ];
 
   PublicRepresentativeSlider({super.key,this.onPressed});
 
@@ -92,32 +71,51 @@ class PublicRepresentativeSlider extends StatelessWidget {
 
         const SizedBox(height: 10,),
         /// Slider
-        CarouselSlider(
-          options: CarouselOptions(
-            height: 430,
-            autoPlay: true,
-            enlargeCenterPage: true,
-            viewportFraction: 0.95,
-            enableInfiniteScroll: true,
-          ),
-          items: representatives.map((rep) {
-            return Builder(
-              builder: (BuildContext context) {
-                return RepresentativeCard(
-                  name: rep["name"]!,
-                  party: rep["party"]!,
-                  role: rep["role"]!,
-                  desc: rep["desc"]!,
-                  imageUrl: rep["imageUrl"]!,
-                  avatarUrl: rep["avatarUrl"]!,
-                  rating: rep["rating"]!,
-                  comments: rep["comments"]!,
-                  performance: rep["performance"]!,
+        FutureBuilder(
+            future: PoliticianDetailsAPI(context: context).getDefaultPoliticianDetails(),
+            builder: (context,snapshot){
+              if(snapshot.connectionState == ConnectionState.waiting){
+                return CustomCircularIndicator();
+              }
+              if(snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty){
+                final representatives = snapshot.data!;
+                return CarouselSlider(
+                  options: CarouselOptions(
+                    height: 430,
+                    autoPlay: true,
+                    enlargeCenterPage: true,
+                    viewportFraction: 0.95,
+                    enableInfiniteScroll: true,
+                  ),
+                  items: representatives.map((value) {
+                    final rep = value['politician']??{};
+                    return Builder(
+                      builder: (BuildContext context) {
+                        return RepresentativeCard(
+                          id: rep['id'].toString(),
+                          name: rep["name"]??'N/A',
+                          party: rep["party_name"]??'',
+                          role: rep["constituency_category"]??'',
+                          desc: rep["about"]??'',
+                          imageUrl: rep["party_logo"]??'',
+                          avatarUrl: rep["photo"]??'',
+                          rating: rep["rating"].toString(),
+                          comments: rep["comment_count"].toString(),
+                          performance: rep["performance"].toString(),
+                        );
+                      },
+                    );
+                  }).toList(),
                 );
-              },
-            );
-          }).toList(),
-        ),
+              }else{
+                return Center(
+                  child: Text('No data available',style: TextStyle( fontSize: 14,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.2,),),
+                );
+              }
+        })
       ],
     );
   }

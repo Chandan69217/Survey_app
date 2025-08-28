@@ -6,7 +6,10 @@ import 'package:survey_app/model/AppUser.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
 import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/view/auth/CitizenLoginScreen.dart';
+import 'package:survey_app/view/home/AboutUsScreen.dart';
 import 'package:survey_app/view/home/EmulatorMockup/EmulatorMockup.dart';
+import 'package:survey_app/view/home/FaqContactScreen.dart';
+import 'package:survey_app/view/home/OurLegendaryLeadersScreen.dart';
 import 'package:survey_app/view/home/ProfileScreen.dart';
 import 'package:survey_app/view/home/PublicRepresentative/PublicRepresentativeScreen.dart';
 import 'package:survey_app/view/home/slider/slider_screen.dart';
@@ -25,6 +28,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final scrollController = ScrollController();
+
+  // Global Keys
+  final _politicalPartyKey = GlobalKey();
+  final _candidateKey = GlobalKey();
+  final _legendaryTeamKey = GlobalKey();
+  final _contactUsKey = GlobalKey();
+  final _faqKey = GlobalKey();
+  final _aboutKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,151 +46,157 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: CustColors.background1,
         centerTitle: true,
         title: Image.asset("assets/images/true-survey-logo.png", scale: 4.1),
-        //     actions: [
-        //   Consumer<AppUser>(
-        //   builder: (context, user, child) {
-        //     return user.isLogin ? Padding(
-        //       padding: const EdgeInsets.only(right: 12.0),
-        //       child: GestureDetector(
-        //         onTap: ()async{
-        //           Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfileScreen()));
-        //         },
-        //         child: CustomNetworkImage(
-        //           height: 45,
-        //           width: 45,
-        //           imageUrl: user.photo,
-        //         ),
-        //       ),
-        //     ) :Padding(
-        //       padding: const EdgeInsets.only(right: 6.0),
-        //       child: TextButton(onPressed: (){
-        //         Navigator.of(context).push(MaterialPageRoute(builder: (context)=>CitizenLoginScreen()));
-        //       },
-        //         child: Text('Login'),
-        //         style: TextButton.styleFrom(
-        //           foregroundColor: Colors.white,
-        //         ),
-        //       ),
-        //     );
-        // },
-        // ),
-        //     ],
       ),
       drawer: _drawerUI(),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(0.0),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 0),
-                FadeInAnimation(
-                  delay: 0.5,
-                  child: SizedBox(height: 220, child: SliderScreen()),
-                ),
-                SlideInAnimation(
-                  direction: SlideDirection.right,
-                  delay: 0.7,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    color: const Color(0xFF123763),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 20),
-                        const Text(
-                          'ईमानदार और पारदर्शी समीक्षा से लोकतंत्र को मजबूत बनाएं — एक बेहतर और ताकतवर देश के लिए मिलकर कदम बढ़ाएं।',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
+      body: GestureDetector(
+        onTap: (){
+          FocusScope.of(context).unfocus();
+        },
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(0.0),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              child: Column(
+                children: [
+                  const SizedBox(height: 0),
+                  FadeInAnimation(
+                    delay: 0.5,
+                    child: SizedBox(height: 220, child: SliderScreen()),
+                  ),
+                  SlideInAnimation(
+                    direction: SlideDirection.right,
+                    delay: 0.7,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      color: CustColors.background1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 20),
+                          const Text(
+                            'ईमानदार और पारदर्शी समीक्षा से लोकतंत्र को मजबूत बनाएं — एक बेहतर और ताकतवर देश के लिए मिलकर कदम बढ़ाएं।',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            SlideInAnimation(
-                              direction: SlideDirection.left,
-                              delay: 0.9,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFFB800),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32,
-                                    vertical: 14,
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SlideInAnimation(
+                                direction: SlideDirection.left,
+                                delay: 0.9,
+                                child: ElevatedButton(
+                                  onPressed: ()async {
+                                    final context = _politicalPartyKey.currentContext;
+                                    if(context != null){
+                                      Scrollable.ensureVisible(
+                                        context,
+                                        duration: const Duration(seconds: 1),
+                                        curve: Curves.easeInOut
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFFB800),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 32,
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Explore Parties",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SlideInAnimation(
-                              direction: SlideDirection.right,
-                              delay: 1.1,
-                              child: OutlinedButton(
-                                onPressed: () {},
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.white),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Contact Us",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white,
+                                  child: const Text(
+                                    "Explore Parties",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              SlideInAnimation(
+                                direction: SlideDirection.right,
+                                delay: 1.1,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    final context = _contactUsKey.currentContext;
+                                    if (context != null) {
+                                      Scrollable.ensureVisible(
+                                        context,
+                                        duration: const Duration(seconds: 1),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    }
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Colors.white),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 32,
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "Contact Us",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                EmulatorMockup(),
-                FadeInAnimation(delay: 1.3, child: StatsSection()),
-                const SizedBox(height: 10),
-                SlideInAnimation(
-                  direction: SlideDirection.left,
-                  delay: 1.5,
-                  child: PublicRepresentativeSlider(
-                    onPressed: () async {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => PublicRepresentativeScreen(),
-                        ),
-                      );
-                    },
+                  EmulatorMockup(),
+                  FadeInAnimation(delay: 1.3, child: StatsSection()),
+                  const SizedBox(height: 10),
+                  SlideInAnimation(
+                    direction: SlideDirection.left,
+                    delay: 1.5,
+                    child: PublicRepresentativeSlider(
+                      onPressed: () async {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => PublicRepresentativeScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                SlideInAnimation(
-                  direction: SlideDirection.up,
-                  delay: 1.6,
-                  child: const RepresentativeSection(),
-                ),
-                FadeInAnimation(delay: 1.7, child: RepresentativePartySlider()),
-              ],
+                  const SizedBox(height: 10),
+                  SlideInAnimation(
+                    key: _candidateKey,
+                    direction: SlideDirection.up,
+                    delay: 1.6,
+                    child: const RepresentativeSection(),
+                  ),
+                  FadeInAnimation(key: _politicalPartyKey,
+                      delay: 1.7, child: RepresentativePartySlider()),
+
+                  SlideInAnimation(
+                    key: _legendaryTeamKey,
+                    direction: SlideDirection.up,
+                      delay: 1.9,
+                      child: OurLegendaryLeadersScreen()
+                  ),
+                  FaqContactScreen(key: _faqKey,contactUsKey: _contactUsKey,),
+                  AboutUsScreen(key: _aboutKey,),
+                ],
+              ),
             ),
           ),
         ),
@@ -286,11 +305,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ListView(shrinkWrap: true, 
               padding: EdgeInsets.all(12),
               children: [
-                _buildInfoTile('Political Party', Iconsax.people,color: Colors.indigo),
-                _buildInfoTile('Candidate', Iconsax.personalcard,color: Colors.orange),
-                _buildInfoTile('Legendary Team', Iconsax.profile_2user,color: Colors.purple),
-                _buildInfoTile('Contact', Iconsax.message,color: Colors.green),
-                _buildInfoTile('About', Iconsax.info_circle,color: Colors.blue),
+                _buildInfoTile('Political Party', Iconsax.people,color: Colors.indigo,onTap: (){_scrollTo(_politicalPartyKey);}),
+                _buildInfoTile('Candidate', Iconsax.personalcard,color: Colors.orange,onTap: (){_scrollTo(_candidateKey);}),
+                _buildInfoTile('Legendary Team', Iconsax.profile_2user,color: Colors.purple,onTap: (){_scrollTo(_legendaryTeamKey);}),
+                _buildInfoTile('Contact', Iconsax.call,color: Colors.teal,onTap: (){_scrollTo(_contactUsKey);}),
+                _buildInfoTile('Freq Asked Question', Iconsax.message,color: Colors.green,onTap: (){_scrollTo(_faqKey);}),
+                _buildInfoTile('About', Iconsax.info_circle,color: Colors.blue,onTap: (){_scrollTo(_aboutKey);}),
                 const SizedBox(height: 20,),
                 // Logout Button
             Consumer<AppUser>(
@@ -330,6 +350,19 @@ class _HomeScreenState extends State<HomeScreen> {
       leading: Icon(icon, color: color),
       title: Text(title),
     );
+  }
+
+  void _scrollTo(GlobalKey key) async{
+    final context = key.currentContext;
+    if (context != null) {
+      Navigator.of(context).pop();
+      // await Future.delayed(Duration(milliseconds: 1000));
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(seconds: 1),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
 }

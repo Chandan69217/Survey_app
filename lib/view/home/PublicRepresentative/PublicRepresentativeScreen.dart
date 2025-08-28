@@ -1,53 +1,182 @@
 import 'package:flutter/material.dart';
+import 'package:survey_app/api_service/PoliticianDetailsAPI.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
+import 'package:survey_app/view/home/PublicRepresentative/PoliticianDetailsScreen.dart';
+import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 
-class PublicRepresentativeScreen extends StatelessWidget {
-  const PublicRepresentativeScreen({super.key});
+class PublicRepresentativeScreen extends StatefulWidget {
+  PublicRepresentativeScreen({super.key});
+
+  @override
+  State<PublicRepresentativeScreen> createState() => _PublicRepresentativeScreenState();
+}
+
+class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen> {
+  final ScrollController _scrollController = ScrollController();
+  List<dynamic> _politicianList = [];
+  int _currentPage = 1;
+  bool _isLoading = false;
+  bool _hasNext = true;
+  bool _isFilterApplied = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPoliticians();
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent &&
+          !_isLoading &&
+          _hasNext) {
+        _fetchPoliticians();
+      }
+    });
+  }
+
+  Future<void> _fetchPoliticians() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final response = _isFilterApplied ? await PoliticianDetailsAPI(context: context).getPoliticianListByFilter(pageNo: _currentPage.toString())  :
+      await PoliticianDetailsAPI(context: context)
+          .getPoliticianList(pageNo: _currentPage.toString());
+      if(response != null){
+        final List<dynamic> newList = response['data'] ?? [];
+        final paginationDetails = response['pagination'];
+        final bool hasNext = paginationDetails['has_next'] ?? false;
+
+        setState(() {
+          _politicianList.addAll(newList);
+          _hasNext = hasNext;
+          _currentPage++;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching politicians: $e");
+    }
+
+    setState(() => _isLoading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: CustColors.background2,
       appBar: AppBar(
-        centerTitle: true,
         title: Text(
-          "PUBLIC REPRESENTATIVE",
-          style: TextStyle(
+          "Public Representative",
+          style: Theme.of(context).textTheme.titleMedium!.copyWith(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
           ),
         ),
+        backgroundColor: CustColors.background1,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// FILTER SECTION
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF001a44),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.filter_list, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      "Filter Representative",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    )
-                  ],
+              /// FILTER SECTION BUTTON
+              GestureDetector(
+                onTap: () {
+                  _showFilterBottomSheet(context);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: CustColors.background1,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.filter_list, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        "Filter Representative",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(height: 20),
+
+              /// REPRESENTATIVE CARDS
+              Text(
+                "Representative List",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
-        
+              Expanded(
+                child: _politicianList.isEmpty && !_isLoading
+                    ? const Center(
+                  child: Text(
+                    'No Data Available',
+                    style: TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16),
+                  ),
+                )
+                    : ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _politicianList.length + (_isLoading ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == _politicianList.length) {
+                      return const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: Center(child: CustomCircularIndicator()),
+                      );
+                    }
+
+                    final rep = _politicianList[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0, top: 2),
+                      child: RepresentativeCard(
+                        id: rep['id'].toString()??'',
+                        name: rep["name"] ?? 'N/A',
+                        party: rep["party_name"] ?? '',
+                        role: rep["constituency_category"] ?? '',
+                        desc: rep["about"] ?? '',
+                        imageUrl: rep["party_logo"] ?? '',
+                        avatarUrl: rep["photo"] ?? '',
+                        rating: rep["rating"].toString(),
+                        comments: rep["comment_count"].toString(),
+                        performance: rep["performance"].toString(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               _buildDropdown("Constituency Type"),
               _buildDropdown("State"),
               _buildDropdown("Constituency"),
@@ -55,14 +184,19 @@ class PublicRepresentativeScreen extends StatelessWidget {
               _buildDropdown("City"),
               _buildDropdown("Block"),
               _buildDropdown("Panchayat"),
-        
-              const SizedBox(height: 12),
-        
+              const SizedBox(height: 16),
+
+              /// BUTTONS
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        _isFilterApplied = true;
+                        _politicianList = [];
+                        _fetchPoliticians();
+                        Navigator.pop(context); // close sheet
+                      },
                       icon: const Icon(Icons.check, size: 18),
                       label: const Text("Apply"),
                       style: ElevatedButton.styleFrom(
@@ -76,11 +210,16 @@ class PublicRepresentativeScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        _isFilterApplied = false;
+                        _politicianList = [];
+                        _fetchPoliticians();
+                        Navigator.pop(context); // close sheet
+                      },
                       icon: const Icon(Icons.close, color: Colors.red),
                       label: const Text("Reset"),
                       style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16.0),
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
                         shape: RoundedRectangleBorder(
@@ -91,42 +230,11 @@ class PublicRepresentativeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-        
-              const SizedBox(height: 20),
-        
-              /// REPRESENTATIVE CARDS
-              RepresentativeCard(
-                name: "John Doe",
-                party: "raj • Bihar",
-                role: "Assembly",
-                desc: "An experienced leader focused on development.",
-                imageUrl:
-                "https://storage.googleapis.com/a1aa/image/fbca9ba6-ba61-4574-b8e0-42646aa9e451.jpg",
-                avatarUrl:
-                "https://storage.googleapis.com/a1aa/image/44501096-b486-44fd-977e-5684455eae16.jpg",
-                rating: "5",
-                comments: "2",
-                performance: "51.1%",
-              ),
-              const SizedBox(height: 16),
-        
-              RepresentativeCard(
-                name: "Tejaswi Yadav",
-                party: "Rashtriya Janata Dal • Bihar",
-                role: "Assembly",
-                desc: "dfewdew",
-                imageUrl:
-                "https://storage.googleapis.com/a1aa/image/117a30e8-6c8a-46c7-b346-87eb7e004b4a.jpg",
-                avatarUrl:
-                "https://storage.googleapis.com/a1aa/image/eb2c5c4a-f792-4024-0dca-f5d3d71ff89b.jpg",
-                rating: "0",
-                comments: "0",
-                performance: "0%",
-              ),
+              const SizedBox(height: 12),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -166,13 +274,13 @@ class PublicRepresentativeScreen extends StatelessWidget {
     );
   }
 
-
 }
 
 
 
 
 class RepresentativeCard extends StatelessWidget {
+  final  String id;
   final String name;
   final String party;
   final String role;
@@ -185,6 +293,7 @@ class RepresentativeCard extends StatelessWidget {
 
   const RepresentativeCard({
     super.key,
+    required this.id,
     required this.name,
     required this.party,
     required this.role,
@@ -296,7 +405,27 @@ class RepresentativeCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                            ),
+                            isScrollControlled: true,
+                            builder: (context) {
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                                ),
+                                child: Wrap(
+                                  children: const [
+                                    FeedbackForm(),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           shape: RoundedRectangleBorder(
@@ -309,7 +438,11 @@ class RepresentativeCard extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: ()async {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context)=> PoliticianDetails(
+                            id: id,
+                          )));
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepOrange,
                           shape: RoundedRectangleBorder(
@@ -345,3 +478,6 @@ class RepresentativeCard extends StatelessWidget {
 
 
 }
+
+
+

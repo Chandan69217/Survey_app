@@ -168,7 +168,7 @@ class RepresentativeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 320,
+      width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,

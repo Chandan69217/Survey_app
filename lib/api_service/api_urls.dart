@@ -6,4 +6,7 @@ class Urls{
   static const String register = '/api/public-user/register/';
   static const String resetPassword = '/api/public-user/reset-password/';
   static const String getProfileDetails = '/api/profile-details/';
+  static const String defaultPolitician = '/api/default-politician-details/view/';
+  static const String politicianList = '/api/politician-details/public-list/';
+  static const String contact_us = '/api/contact-us/';
 }
