@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:survey_app/main.dart';
 import 'package:survey_app/model/AppUser.dart';
+import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
+import 'package:survey_app/utilities/custom_dialog/CustomMessageDialog.dart';
 import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
+import 'package:survey_app/utilities/location_permisson_handler/LocationPermissionHandler.dart';
 import 'package:survey_app/view/auth/CitizenLoginScreen.dart';
 import 'package:survey_app/view/home/AboutUsScreen.dart';
 import 'package:survey_app/view/home/EmulatorMockup/EmulatorMockup.dart';
@@ -14,6 +19,7 @@ import 'package:survey_app/view/home/ProfileScreen.dart';
 import 'package:survey_app/view/home/PublicRepresentative/PublicRepresentativeScreen.dart';
 import 'package:survey_app/view/home/slider/slider_screen.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import 'PublicChatDialog/PublicChatDialog.dart';
 import 'PublicRepresentative/PublicRepresentativeSlider.dart';
 import 'RepresentativePartySlider.dart';
@@ -38,6 +44,13 @@ class _HomeScreenState extends State<HomeScreen> {
   final _faqKey = GlobalKey();
   final _aboutKey = GlobalKey();
 
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((duration){
+      getLocationPermission(context);
+    });
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     delay: 0.5,
                     child: SizedBox(height: 220, child: SliderScreen()),
                   ),
+                  const SizedBox(height: 2,),
                   SlideInAnimation(
                     direction: SlideDirection.right,
                     delay: 0.7,
@@ -227,11 +241,22 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: const Color(0xFF00A97F),
             label: 'Public Chat',
             labelStyle: const TextStyle(fontSize: 14),
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (context) => const PublicChatDialog(),
-              );
+            onTap: ()async {
+              // if(!(prefs.getBool(Consts.isLogin)??false)){
+              //   Navigator.of(context).push(
+              //       MaterialPageRoute(builder: (context)=>CitizenLoginScreen()
+              //       )
+              //   );
+              // }
+              final status = await getLocationPermission(context);
+              if(status == LocationPermissionStatus.granted){
+                showDialog(
+                  context: context,
+                  builder: (context) => PublicChatDialog(channel: WebSocketChannel.connect( Uri.parse('ws://truesurvey.in/ws/chat-discussion/')),),
+                );
+              }else{
+                CustomMessageDialog.show(context, title: 'Warning', message: 'Please allow location to access public chat !!');
+              }
             },
           ),
         ],

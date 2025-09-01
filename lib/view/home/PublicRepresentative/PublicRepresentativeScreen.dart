@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:survey_app/api_service/GetLocationDetailsAPI.dart';
 import 'package:survey_app/api_service/PoliticianDetailsAPI.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
 import 'package:survey_app/view/home/PublicRepresentative/PoliticianDetailsScreen.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 
+
+
 class PublicRepresentativeScreen extends StatefulWidget {
   PublicRepresentativeScreen({super.key});
 
   @override
-  State<PublicRepresentativeScreen> createState() => _PublicRepresentativeScreenState();
+  State<PublicRepresentativeScreen> createState() =>
+      _PublicRepresentativeScreenState();
 }
 
-class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen> {
+class _PublicRepresentativeScreenState
+    extends State<PublicRepresentativeScreen> {
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _politicianList = [];
   int _currentPage = 1;
@@ -20,14 +26,14 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
   bool _hasNext = true;
   bool _isFilterApplied = false;
 
+
   @override
   void initState() {
     super.initState();
     _fetchPoliticians();
-
     _scrollController.addListener(() {
       if (_scrollController.position.pixels ==
-          _scrollController.position.maxScrollExtent &&
+              _scrollController.position.maxScrollExtent &&
           !_isLoading &&
           _hasNext) {
         _fetchPoliticians();
@@ -39,10 +45,14 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
     setState(() => _isLoading = true);
 
     try {
-      final response = _isFilterApplied ? await PoliticianDetailsAPI(context: context).getPoliticianListByFilter(pageNo: _currentPage.toString())  :
-      await PoliticianDetailsAPI(context: context)
-          .getPoliticianList(pageNo: _currentPage.toString());
-      if(response != null){
+      final response = _isFilterApplied
+          ? await PoliticianDetailsAPI(
+              context: context,
+            ).getPoliticianListByFilter(pageNo: _currentPage.toString())
+          : await PoliticianDetailsAPI(
+              context: context,
+            ).getPoliticianList(pageNo: _currentPage.toString());
+      if (response != null) {
         final List<dynamic> newList = response['data'] ?? [];
         final paginationDetails = response['pagination'];
         final bool hasNext = paginationDetails['has_next'] ?? false;
@@ -67,9 +77,9 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
       appBar: AppBar(
         title: Text(
           "Public Representative",
-          style: Theme.of(context).textTheme.titleMedium!.copyWith(
-            color: Colors.white,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium!.copyWith(color: Colors.white),
         ),
         backgroundColor: CustColors.background1,
       ),
@@ -100,7 +110,7 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -110,10 +120,9 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
               /// REPRESENTATIVE CARDS
               Text(
                 "Representative List",
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Expanded(
@@ -122,14 +131,16 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
                   child: Text(
                     'No Data Available',
                     style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16),
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
                   ),
                 )
                     : ListView.builder(
                   controller: _scrollController,
-                  itemCount: _politicianList.length + (_isLoading ? 1 : 0),
+                  itemCount:
+                  _politicianList.length + (_isLoading ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index == _politicianList.length) {
                       return const Padding(
@@ -142,7 +153,7 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8.0, top: 2),
                       child: RepresentativeCard(
-                        id: rep['id'].toString()??'',
+                        id: rep['id'].toString() ?? '',
                         name: rep["name"] ?? 'N/A',
                         party: rep["party_name"] ?? '',
                         role: rep["constituency_category"] ?? '',
@@ -165,89 +176,172 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
   }
 
   void _showFilterBottomSheet(BuildContext context) {
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
+      builder: (_) {
         return Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDropdown("Constituency Type"),
-              _buildDropdown("State"),
-              _buildDropdown("Constituency"),
-              _buildDropdown("District"),
-              _buildDropdown("City"),
-              _buildDropdown("Block"),
-              _buildDropdown("Panchayat"),
-              const SizedBox(height: 16),
-
-              /// BUTTONS
-              Row(
+          child: Consumer<LocationFilterData>(
+            builder: (BuildContext _, value, Widget? child) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _isFilterApplied = true;
-                        _politicianList = [];
-                        _fetchPoliticians();
-                        Navigator.pop(context); // close sheet
-                      },
-                      icon: const Icon(Icons.check, size: 18),
-                      label: const Text("Apply"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF001a44),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  _buildDropdown(
+                    "Constituency Type",
+                    LocationFilterData.constituencyTypeList
+                        .map<DropdownMenuItem<String>>(
+                          (e) => DropdownMenuItem<String>(
+                        value: e['id']?.toString(),
+                        child: Text(e['name']??'N/A'),
+                      ),
+                    )
+                        .toList(),
+                    value: LocationFilterData.selectedConstituencyType,
+                    onChange: value.onConstituencyTypeChanged,
+                  ),
+                  _buildDropdown(
+                    "State",
+                    LocationFilterData.stateList.map<DropdownMenuItem<String>>(
+                          (e)=> DropdownMenuItem<String>(
+                        value: e['id']?.toString(),
+                        child: Text(e['name']??'N/A'),
+                      ),
+                    ).toList(),
+                    value: LocationFilterData.selectedState,
+                    onChange: value.onStateChanged,
+                  ),
+                  _buildDropdown(
+                    "Constituency",
+                    LocationFilterData.constituencyList.map<DropdownMenuItem<String>>(
+                            (e)=> DropdownMenuItem<String>(
+                            value: e['id']?.toString(),
+                            child: Text('${e['name']}-(${e['state']})')
+                        )
+                    ).toList(),
+                    value: LocationFilterData.selectedConstituency,
+                    onChange: value.onConstituencyChanged,
+                  ),
+                  _buildDropdown(
+                    "District",
+                    LocationFilterData.districtList.map<DropdownMenuItem<String>>(
+                        (e) => DropdownMenuItem(
+                          value: e['id']?.toString(),
+                            child: Text('${e['name']??'N/A'}')
+                        )
+                    ).toList(),
+                    value: LocationFilterData.selectedDistrict,
+                    onChange: value.onDistrictChanged
+                  ),
+                  _buildDropdown(
+                    "City",
+                    LocationFilterData.cityList.map<DropdownMenuItem<String>>(
+                        (e) => DropdownMenuItem(
+                          value: e['id']?.toString(),
+                            child: Text('${e['name']??'N/A'}')
+                        )
+                    ).toList(),
+                    value: LocationFilterData.selectedCity,
+                    onChange: value.onCityChanged
+                  ),
+                  _buildDropdown(
+                      "Block",
+                      LocationFilterData.blockList.map<DropdownMenuItem<String>>(
+                              (e) => DropdownMenuItem(
+                              value: e['id']?.toString(),
+                              child: Text('${e['name']??'N/A'}')
+                          )
+                      ).toList(),
+                    value: LocationFilterData.selectedBlock,
+                    onChange: value.onBlockChanged
+                  ),
+                  _buildDropdown(
+                      "Panchayat",
+                    LocationFilterData.panchayatList.map<DropdownMenuItem<String>>(
+                            (e) => DropdownMenuItem(
+                            value: e['id']?.toString(),
+                            child: Text('${e['name']??'N/A'}')
+                        )
+                    ).toList(),
+                    value: LocationFilterData.selectedPanchayat,
+                    onChange: value.onPanchayatChanged
+                  ),
+                  const SizedBox(height: 16),
+
+                  /// BUTTONS
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            _isFilterApplied = true;
+                            _politicianList = [];
+                            _fetchPoliticians();
+                            Navigator.pop(context); // close sheet
+                          },
+                          icon: const Icon(Icons.check, size: 18),
+                          label: const Text("Apply"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF001a44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        _isFilterApplied = false;
-                        _politicianList = [];
-                        _fetchPoliticians();
-                        Navigator.pop(context); // close sheet
-                      },
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      label: const Text("Reset"),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            _isFilterApplied = false;
+                            _politicianList = [];
+                            _fetchPoliticians();
+                            Navigator.pop(context); // close sheet
+                          },
+                          icon: const Icon(Icons.close, color: Colors.red),
+                          label: const Text("Reset"),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
+                  const SizedBox(height: 12),
                 ],
-              ),
-              const SizedBox(height: 12),
-            ],
+              );
+            },
           ),
         );
       },
     );
   }
 
-  /// Dropdown Builder
-  Widget _buildDropdown(String label) {
+  // Dropdown Builder
+  Widget _buildDropdown(
+    String label,
+    List<DropdownMenuItem<String>>? data, {
+    String? value,
+    Function(String? value)? onChange,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -256,17 +350,18 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
               borderRadius: BorderRadius.circular(8),
             ),
             child: DropdownButton<String>(
-              value: null,
+              value: value,
               isExpanded: true,
               underline: const SizedBox(),
               hint: Text("Select $label"),
-              items: ["Option 1", "Option 2", "Option 3"]
-                  .map((e) => DropdownMenuItem(
-                value: e,
-                child: Text(e),
-              ))
-                  .toList(),
-              onChanged: (val) {},
+              items: [
+                DropdownMenuItem(
+                  value: null,
+                  child: Text('Select $label'),
+                ),
+                ...data??[],
+              ],
+              onChanged: onChange,
             ),
           ),
         ],
@@ -276,11 +371,8 @@ class _PublicRepresentativeScreenState extends State<PublicRepresentativeScreen>
 
 }
 
-
-
-
 class RepresentativeCard extends StatelessWidget {
-  final  String id;
+  final String id;
   final String name;
   final String party;
   final String role;
@@ -357,8 +449,10 @@ class RepresentativeCard extends StatelessWidget {
                       ],
                     ),
                     Container(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Color(0xFF001a44), // Navy Blue
                         borderRadius: BorderRadius.circular(20),
@@ -381,8 +475,7 @@ class RepresentativeCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   desc,
-                  style:
-                  const TextStyle(fontSize: 13, color: Colors.black87),
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
                 ),
                 const SizedBox(height: 12),
 
@@ -390,12 +483,27 @@ class RepresentativeCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildStat("⭐", "Rating", rating, "from reviews",
-                        Colors.blue),
-                    _buildStat("💬", "Comments", comments, "public feedback",
-                        Colors.green),
-                    _buildStat("📊", "Performance", performance,
-                        "satisfaction", Colors.orange),
+                    _buildStat(
+                      "⭐",
+                      "Rating",
+                      rating,
+                      "from reviews",
+                      Colors.blue,
+                    ),
+                    _buildStat(
+                      "💬",
+                      "Comments",
+                      comments,
+                      "public feedback",
+                      Colors.green,
+                    ),
+                    _buildStat(
+                      "📊",
+                      "Performance",
+                      performance,
+                      "satisfaction",
+                      Colors.orange,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -409,17 +517,24 @@ class RepresentativeCard extends StatelessWidget {
                           showModalBottomSheet(
                             context: context,
                             shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(16),
+                              ),
                             ),
                             isScrollControlled: true,
                             builder: (context) {
                               return Padding(
                                 padding: EdgeInsets.only(
-                                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                                  bottom: MediaQuery.of(
+                                    context,
+                                  ).viewInsets.bottom,
                                 ),
                                 child: Wrap(
-                                  children: const [
-                                    FeedbackForm(),
+                                  children: [
+                                    FeedbackForm(
+                                      politicianId: id,
+                                      onSubmit: () {},
+                                    ),
                                   ],
                                 ),
                               );
@@ -438,10 +553,12 @@ class RepresentativeCard extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: ()async {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (context)=> PoliticianDetails(
-                            id: id,
-                          )));
+                        onPressed: () async {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => PoliticianDetails(id: id),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepOrange,
@@ -454,7 +571,6 @@ class RepresentativeCard extends StatelessWidget {
                     ),
                   ],
                 ),
-
               ],
             ),
           ),
@@ -463,21 +579,184 @@ class RepresentativeCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStat(String icon, String title, String value, String subtitle,
-      Color color) {
+  Widget _buildStat(
+    String icon,
+    String title,
+    String value,
+    String subtitle,
+    Color color,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("$icon $title",
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+        Text(
+          "$icon $title",
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
         Text(value, style: const TextStyle(fontSize: 14)),
-        Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        Text(
+          subtitle,
+          style: const TextStyle(fontSize: 10, color: Colors.grey),
+        ),
       ],
     );
   }
-
-
 }
 
+class LocationFilterData with ChangeNotifier {
+  static List<dynamic> constituencyTypeList = [];
+  static List<dynamic> constituencyList = [];
+  static List<dynamic> stateList = [];
+  static List<dynamic> districtList = [];
+  static List<dynamic> blockList = [];
+  static List<dynamic> cityList = [];
+  static List<dynamic> panchayatList = [];
 
 
+  static String? selectedConstituencyType;
+  static String? selectedConstituency;
+  static String? selectedState;
+  static String? selectedDistrict;
+  static String? selectedCity;
+  static String? selectedBlock;
+  static String? selectedPanchayat;
+
+
+  void onConstituencyTypeChanged(String? val)async{
+    selectedConstituencyType = val;
+    notifyListeners();
+    if(selectedConstituencyType != null && selectedState != null){
+      selectedConstituency = null;
+      _getConstituencyList(constituencyTypeId: selectedConstituencyType!, stateId: selectedState!);
+    }
+  }
+
+  void onStateChanged(String? val)async{
+    selectedState = val;
+    notifyListeners();
+    if(selectedConstituencyType != null && selectedState != null){
+      selectedConstituency = null;
+      _getConstituencyList(constituencyTypeId: selectedConstituencyType!, stateId: selectedState!);
+    }
+    if(selectedState != null){
+      selectedDistrict = null;
+      selectedCity = null;
+      selectedPanchayat = null;
+      selectedBlock = null;
+      _getDistrictList(stateId: selectedState!);
+    }
+
+  }
+
+  void onConstituencyChanged(String? val)async{
+    selectedConstituency = val;
+    notifyListeners();
+  }
+
+  void onDistrictChanged(String? val)async{
+    selectedDistrict = val;
+    if(selectedDistrict == null){
+      return;
+    }
+
+    selectedBlock = null;
+    _getBlockList(districtId: selectedDistrict!);
+
+    selectedPanchayat = null;
+    _getPanchayatList(districtId: selectedDistrict!);
+
+    selectedCity = null;
+    _getCityList(districtId: selectedDistrict!);
+
+    notifyListeners();
+  }
+
+  void onCityChanged(String? val)async{
+    selectedCity = val;
+    notifyListeners();
+  }
+
+  void onBlockChanged(String? val)async{
+    selectedBlock = val;
+    notifyListeners();
+  }
+
+  void onPanchayatChanged(String? val)async{
+    selectedPanchayat = val;
+    notifyListeners();
+  }
+
+
+
+  Future<void> _getConstituencyTypeList() async {
+    constituencyTypeList.clear();
+    constituencyTypeList.addAll(
+      await GetLocationDetailsAPI.getConstituencyTypeList(),
+    );
+    notifyListeners();
+  }
+
+
+  Future<void> _getStateList() async {
+    stateList.clear();
+    stateList.addAll(await GetLocationDetailsAPI.getStateList());
+    notifyListeners();
+  }
+
+
+  Future<void> _getConstituencyList({
+    required String constituencyTypeId,
+    required String stateId,
+  }) async {
+    constituencyList.clear();
+    constituencyList.addAll(
+      await GetLocationDetailsAPI.getConstituencyList(
+        constituencyTypeID: constituencyTypeId,
+        stateId: stateId,
+      ),
+    );
+    notifyListeners();
+  }
+
+  Future<void> _getDistrictList({required String stateId}) async {
+    districtList.clear();
+    districtList.addAll(
+      await GetLocationDetailsAPI.getDistrictList(stateId: stateId),
+    );
+    notifyListeners();
+  }
+
+  Future<void> _getCityList({required String districtId}) async {
+    cityList.clear();
+    cityList.addAll(
+      await GetLocationDetailsAPI.getCityList(districtId: districtId),
+    );
+    notifyListeners();
+  }
+
+  Future<void> _getBlockList({required String districtId}) async {
+    blockList.clear();
+    blockList.addAll(
+      await GetLocationDetailsAPI.getBlockList(districtId: districtId),
+    );
+    notifyListeners();
+  }
+
+  Future<void> _getPanchayatList({required String districtId}) async {
+    panchayatList.clear();
+    panchayatList.addAll(
+      await GetLocationDetailsAPI.getPanchayatList(districtId: districtId),
+    );
+    notifyListeners();
+  }
+
+  Future<void> getInitialData() async {
+    _getConstituencyTypeList();
+    _getStateList();
+  }
+
+}

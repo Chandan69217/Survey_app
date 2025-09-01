@@ -21,10 +21,14 @@ class _SplashScreenState extends State<SplashScreen> {
     WidgetsBinding.instance.addPostFrameCallback((duration)async{
       final bool isOnboarded =  prefs.getBool(Consts.isOnBoarded)??false;
       Future.delayed(const Duration(seconds: 2), ()async{
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => isOnboarded ? HomeScreen() : OnboardingScreen()),
-        );
+       try{
+         Navigator.pushReplacement(
+           context,
+           MaterialPageRoute(builder: (context) => isOnboarded ? HomeScreen() : OnboardingScreen()),
+         );
+       }catch(excption,trace){
+         print('Exception: $excption ,Trace: $trace');
+       }
       });
     });
   }
@@ -39,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/splash/vote_icon.png', // Replace with your actual image asset
+              'assets/splash/vote_icon.png',
               width: 120,
               height: 120,
             ),
@@ -60,6 +64,7 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
+
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -98,6 +103,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isSmall = size.width < 400; // phone
+    final isTablet = size.width >= 600; // tablet or large
+
     return Scaffold(
       body: Stack(
         children: [
@@ -110,37 +119,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               });
             },
             itemBuilder: (context, index) {
-              return OnboardingPageWidget(page: _pages[index]);
+              return OnboardingPageWidget(
+                page: _pages[index],
+                isSmall: isSmall,
+                isTablet: isTablet,
+                size: size,
+              );
             },
           ),
           Positioned(
-            bottom: 40,
+            bottom: isSmall ? 20 : 40,
             left: 0,
             right: 0,
             child: Column(
               children: [
+                // Dots
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
                     _pages.length,
-                    (index) => buildDot(index: index),
+                        (index) => buildDot(index: index),
                   ),
                 ),
                 const SizedBox(height: 30),
+                // Button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 80 : 40,
+                  ),
                   child: ElevatedButton(
                     onPressed: () {
-                      print("Button actually pressed!");
                       if (_currentPage == _pages.length - 1) {
-                        // Navigate to home screen
                         prefs.setBool(Consts.isOnBoarded, true);
-                        print("Saved Onboarding: ${prefs.getBool(Consts.isOnBoarded)}");
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => HomeScreen(),
-                          ),
+                          MaterialPageRoute(builder: (context) => HomeScreen()),
                         );
                       } else {
                         _pageController.nextPage(
@@ -154,14 +167,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      minimumSize: const Size(double.infinity, 56),
+                      minimumSize: Size(double.infinity, isSmall ? 48 : 56),
                     ),
                     child: Text(
                       _currentPage == _pages.length - 1
                           ? "Get Started"
                           : "Next",
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: TextStyle(
+                        fontSize: isSmall ? 16 : 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -188,7 +201,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
-
 }
 
 class OnboardingPage {
@@ -209,31 +221,49 @@ class OnboardingPage {
 
 class OnboardingPageWidget extends StatelessWidget {
   final OnboardingPage page;
+  final bool isSmall;
+  final bool isTablet;
+  final Size size;
 
-  const OnboardingPageWidget({super.key, required this.page});
+  const OnboardingPageWidget({
+    super.key,
+    required this.page,
+    required this.isSmall,
+    required this.isTablet,
+    required this.size,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: page.color.withOpacity(0.1),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      color: page.color.withValues(alpha: 0.1),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 48 : 24,
+        vertical: isSmall ? 60 : 0
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: isSmall ? MainAxisAlignment.start :MainAxisAlignment.center,
         children: [
+          // Icon circle
           Container(
-            width: 120,
-            height: 120,
+            width: isTablet ? 150 : 120,
+            height: isTablet ? 150 : 120,
             decoration: BoxDecoration(
-              color: page.color.withOpacity(0.2),
+              color: page.color.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: Icon(page.icon, size: 60, color: page.color),
+            child: Icon(
+              page.icon,
+              size: isTablet ? 80 : 60,
+              color: page.color,
+            ),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: isTablet ? 50 : 40),
+          // Title
           Text(
             page.title,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: isSmall ? 18 : (isTablet ? 26 : 20),
               fontWeight: FontWeight.bold,
               color: page.color,
             ),
@@ -241,30 +271,32 @@ class OnboardingPageWidget extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             page.subtitle,
-            style: const TextStyle(
-              fontSize: 20,
+            style: TextStyle(
+              fontSize: isSmall ? 18 : (isTablet ? 24 : 20),
               fontWeight: FontWeight.w500,
               color: Colors.black87,
             ),
           ),
           const SizedBox(height: 24),
+          // Description
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               page.description,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
+              style: TextStyle(
+                fontSize: isSmall ? 14 : 16,
                 color: Colors.black54,
                 height: 1.5,
               ),
             ),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: isTablet ? 60 : 40),
+          // Image
           Image.asset(
             'assets/onboarding/onboarding_${_getImageIndex(page.title)}.png',
-            height: 200,
-            fit: BoxFit.contain, // Add this to maintain aspect ratio
+            height: isTablet ? size.height * 0.35 : 200,
+            fit: BoxFit.contain,
           ),
         ],
       ),
@@ -285,4 +317,5 @@ class OnboardingPageWidget extends StatelessWidget {
   }
 
 }
+
 

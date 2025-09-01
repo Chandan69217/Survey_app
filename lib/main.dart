@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/theme/app_theme/app_theme.dart';
+import 'package:survey_app/view/home/PublicRepresentative/PublicRepresentativeScreen.dart';
 import 'package:survey_app/view/home/homescreen.dart';
 import 'package:survey_app/view/spalash/SplashScreen.dart';
 
@@ -14,6 +16,10 @@ late SharedPreferences prefs;
 Future<void> main()async {
   WidgetsFlutterBinding.ensureInitialized();
   prefs = await SharedPreferences.getInstance();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   final data = {
     Consts.isOnBoarded: prefs.getBool(Consts.isOnBoarded)??false,
     Consts.performed: prefs.getBool(Consts.performed)??false,
@@ -26,10 +32,17 @@ Future<void> main()async {
   };
   runApp(
     // MyApp()
-    ChangeNotifierProvider(
-      create: (_) => AppUser.fromPrefs(data),
+    MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_)=>AppUser.fromPrefs(data)),
+          ChangeNotifierProvider(create: (_){
+            final provider = LocationFilterData();
+            provider.getInitialData();
+            return provider;
+          }),
+        ],
       child: MyApp(),
-    ),
+  )
   );
 }
 
@@ -39,6 +52,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      builder: (context,child){
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler:TextScaler.noScaling ),
+          child: child!,
+        );
+      },
       title: 'Election Survey',
       darkTheme: AppTheme.dark,
       theme: AppTheme.light,

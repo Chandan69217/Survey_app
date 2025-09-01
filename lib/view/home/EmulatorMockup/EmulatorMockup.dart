@@ -4,6 +4,8 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 
+
+
 class EmulatorMockup extends StatefulWidget {
   const EmulatorMockup({Key? key}) : super(key: key);
 

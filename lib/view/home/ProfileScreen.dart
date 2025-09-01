@@ -12,6 +12,7 @@ import 'package:survey_app/main.dart';
 import 'package:survey_app/model/AppUser.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
+import 'package:survey_app/view/auth/ChangePasswordScreen.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 
@@ -380,6 +381,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             MaterialPageRoute(
                               builder: (_) =>
                                   EditProfileScreen(userData: userData),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10,),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 24),
+                          elevation: 5,
+                          shadowColor: Colors.blue.shade300,
+                        ),
+                        icon: const Icon(Iconsax.password_check, color: Colors.white),
+                        label: const Text("Change Password",
+                            style: TextStyle(color: Colors.white)),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ChangePasswordScreen(),
                             ),
                           );
                         },

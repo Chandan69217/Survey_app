@@ -181,11 +181,15 @@ class _OurLegendaryLeadersScreenState extends State<OurLegendaryLeadersScreen> {
                shrinkWrap: true,
                physics: const NeverScrollableScrollPhysics(),
                itemCount: leaders.length,
-               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                 crossAxisCount: 2, // 2 per row on mobile
+               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                 crossAxisCount: 2,
                  crossAxisSpacing: 12,
                  mainAxisSpacing: 12,
-                 childAspectRatio: 0.75,
+                   childAspectRatio: MediaQuery.of(context).size.width < 400
+                       ? 0.6
+                       : MediaQuery.of(context).size.width < 600
+                       ? 0.75
+                       : 1,
                ),
                itemBuilder: (context, index) {
                  final leader = leaders[index];
@@ -202,7 +206,11 @@ class _OurLegendaryLeadersScreenState extends State<OurLegendaryLeadersScreen> {
            options: CarouselOptions(
              scrollPhysics: const BouncingScrollPhysics(),
              autoPlay: true,
-             height: 550,
+    height: MediaQuery.of(context).size.width < 400
+    ? MediaQuery.of(context).size.height * 0.75
+        : MediaQuery.of(context).size.width < 600
+    ? MediaQuery.of(context).size.height * 0.6
+        : MediaQuery.of(context).size.height * 0.7,
              aspectRatio: 2,
              viewportFraction: 1,
              onPageChanged: (index, reason) {
