@@ -178,7 +178,7 @@ class _PublicChatDialogState extends State<PublicChatDialog> {
             Expanded(
                 child: _message.isEmpty && !_isLoading ? const Padding(
                   padding: EdgeInsets.all(16),
-                  child: Text("No messages yet..."), // Replace with ListView.builder later
+                  child: Text("No messages yet..."),
                 ):ListView.builder(
                   reverse: true,
                   controller: _scrollController,
@@ -283,12 +283,14 @@ class _PublicChatDialogState extends State<PublicChatDialog> {
                         border: Border.all(color: Colors.grey.shade400),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: TextField(
                         controller: _statementController,
                         decoration: InputDecoration(
                           hintText: 'Type message...',
                           border: InputBorder.none,
+                          filled: false,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none
                         ),
                       ),
                     ),
@@ -304,6 +306,7 @@ class _PublicChatDialogState extends State<PublicChatDialog> {
                     icon: const Icon(Icons.send, color: Colors.blue),
                     onPressed: ()async{
                       final statement = _statementController.text;
+                      _statementController.text = '';
                       // try{
                       //   widget.channel.sink.add(statement);
                       // }catch(exception,trace){

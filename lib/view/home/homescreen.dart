@@ -17,6 +17,7 @@ import 'package:survey_app/view/home/FaqContactScreen.dart';
 import 'package:survey_app/view/home/OurLegendaryLeadersScreen.dart';
 import 'package:survey_app/view/home/ProfileScreen.dart';
 import 'package:survey_app/view/home/PublicRepresentative/PublicRepresentativeScreen.dart';
+import 'package:survey_app/view/home/RAISE/RaiseQueryScreen.dart';
 import 'package:survey_app/view/home/slider/slider_screen.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -175,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  EmulatorMockup(),
+                  const EmulatorMockup(),
                   FadeInAnimation(delay: 1.3, child: StatsSection()),
                   const SizedBox(height: 10),
                   SlideInAnimation(
@@ -233,7 +234,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Raise Query',
             labelStyle: const TextStyle(fontSize: 14),
             onTap: () {
-              _showRaiseProblemDialog(context);
+              // _showRaiseProblemDialog(context);
+              Navigator.of(context).push(MaterialPageRoute(builder: (context)=>RaiseQueryScreen()));
             },
           ),
           SpeedDialChild(

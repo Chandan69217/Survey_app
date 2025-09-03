@@ -273,9 +273,9 @@ class _CitizenLoginScreenState extends State<CitizenLoginScreen> {
       if(response.statusCode == 200){
         final data = json.decode(response.body) as Map<String,dynamic>;
         final status = data['success']??false;
-        if(status){
-          final message = data['message']??'';
-          final performed = data['performed']??false;
+        final performed = data['performed']??false;
+        final message = data['message']??'';
+        if(status && performed){
           final accessToken = data['access_token']??'';
           final values = data['data'] as Map<String,dynamic>;
           final name = values['name']??'N/A';
@@ -306,7 +306,6 @@ class _CitizenLoginScreenState extends State<CitizenLoginScreen> {
 
           Navigator.of(context).popUntil((route)=>route.isFirst);
         }else{
-          final message = data['message']??'';
           SnackBarHelper.show(context, message);
         }
       } else{

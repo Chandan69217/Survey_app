@@ -15,4 +15,8 @@ class Urls{
   static const String create_politician_feedback = '/api/politician-feedback/entry/';
   static const String constituency_type = '/api/constituency-type/';
   static const String state_list = '/api/state-list/';
+  static const String politician_details = '/api/election-details/public-list/';
+  static const String public_query_list = '/api/raise-query/public-create/list/';
+  static const String query_save_title = '/api/raise-query/title-list/';
+  static const String public_query_entry = '/api/raise-query/public-create/';
 }
