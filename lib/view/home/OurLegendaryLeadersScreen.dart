@@ -303,6 +303,7 @@ class LeaderCard extends StatelessWidget {
               color: Colors.amber,
               fontWeight: FontWeight.w500,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
 
@@ -316,7 +317,7 @@ class LeaderCard extends StatelessWidget {
                 color: Colors.white70,
                 height: 1.3,
               ),
-              maxLines: 4,
+              maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -373,4 +374,5 @@ class LeaderCard extends StatelessWidget {
       ),
     );
   }
+
 }

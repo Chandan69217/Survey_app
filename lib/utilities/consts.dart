@@ -8,4 +8,6 @@ class Consts{
   static const String isActive = 'is_active';
   static const String photo = 'photo';
   static const String isLogin = 'is_login';
+  static const allowedImages = ['.jpg', '.jpeg', '.png','.webp'];
+  static const allowedVideos = ['.mp4', '.mov', '.avi',];
 }

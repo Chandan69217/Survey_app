@@ -4,13 +4,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
 import 'package:survey_app/api_service/api_urls.dart';
-import 'package:survey_app/api_service/handle_response.dart';
-import 'package:survey_app/main.dart';
-import 'package:survey_app/utilities/consts.dart';
+import 'package:survey_app/providers/LocationFilterData.dart';
 import 'package:survey_app/utilities/custom_dialog/CustomMessageDialog.dart';
 import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/utilities/location_permisson_handler/LocationPermissionHandler.dart';
-import 'package:survey_app/view/home/PublicRepresentative/PublicRepresentativeScreen.dart';
+
 
 
 class PoliticianDetailsAPI {

@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:survey_app/providers/LocationFilterData.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/theme/app_theme/app_theme.dart';
-import 'package:survey_app/view/home/PublicRepresentative/PublicRepresentativeScreen.dart';
-import 'package:survey_app/view/home/homescreen.dart';
 import 'package:survey_app/view/spalash/SplashScreen.dart';
-
 import 'model/AppUser.dart';
+
 
 late SharedPreferences prefs;
 
@@ -34,12 +32,12 @@ Future<void> main()async {
     // MyApp()
     MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_)=>AppUser.fromPrefs(data)),
+          ChangeNotifierProvider(create: (_)=>AppUser.fromPrefs(data),lazy: false,),
           ChangeNotifierProvider(create: (_){
             final provider = LocationFilterData();
             provider.getInitialData();
             return provider;
-          }),
+          },lazy: false,),
         ],
       child: MyApp(),
   )

@@ -10,9 +10,13 @@ import 'package:survey_app/api_service/api_urls.dart';
 import 'package:survey_app/api_service/handle_response.dart';
 import 'package:survey_app/main.dart';
 import 'package:survey_app/model/AppUser.dart';
+import 'package:survey_app/providers/LocationFilterData.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
+import 'package:survey_app/utilities/custom_dialog/CustomMessageDialog.dart';
+import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/view/auth/ChangePasswordScreen.dart';
+import 'package:survey_app/widgets/BuildDropdown.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 
@@ -249,44 +253,49 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppUser>(
-      builder: (context, user, child) {
-        return Scaffold(
-          backgroundColor: CustColors.background2,
-          appBar: AppBar(
-            title: Text(
-              "Profile",
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium!
-                  .copyWith(color: Colors.white,),
-            ),
-          ),
-          body: FutureBuilder<Map<String, dynamic>?>(
-            future: _getProfileDetailsFromAPI(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CustomCircularIndicator());
-              }
+    return Scaffold(
+      backgroundColor: CustColors.background2,
+      appBar: AppBar(
+        title: Text(
+          "Profile",
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium!
+              .copyWith(color: Colors.white,),
+        ),
+      ),
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: _getProfileDetailsFromAPI(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CustomCircularIndicator());
+          }
 
-              if (snapshot.hasData && snapshot.data != null) {
-                final userData = snapshot.data!;
-                String fullName =
-                    "${userData["first_name"]} ${userData["last_name"]}";
-                String joinedDate = DateFormat("dd MMM yyyy, hh:mm a")
-                    .format(DateTime.parse(userData["joined_date"]));
+          if (snapshot.hasData && snapshot.data != null) {
+            final userData = snapshot.data!;
+            String fullName =
+                "${userData["first_name"]??''} ${userData["last_name"]??''}";
+            String joinedDate = userData['created_at'] != null ? DateFormat("dd MMM yyyy, hh:mm a")
+                .format(DateTime.parse(userData["created_at"])):'N/A';
+            final status = userData['status'] is Map && userData['status'] != null ? userData['status']: null;
+            return SafeArea(
+              child: ListView(
+                padding: const EdgeInsets.all(16.0),
+                children: [
 
-                return SafeArea(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16.0),
-                    children: [
-                  
-                      Stack(
-                        children: [
-                          Container(
-                            width: double.infinity,
+                  Stack(
+                      children: [
+                        Container(
+                          width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             // gradient: CustColors.background_gradient,
@@ -312,6 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   imageUrl: userData['photo']??'',
                                   width: 110,
                                   height: 110,
+                                  borderRadius: BorderRadius.circular(60),
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -334,132 +344,134 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ],
                           ),
                         ),
-                          Positioned(
-                            top: 4,
-                            right: 12,
-                            child: Chip(
-                              padding: EdgeInsets.symmetric(vertical: 4,horizontal: 2),
-                              side: BorderSide(
-                                style: BorderStyle.none,
-                              ),
-                              shape: RoundedRectangleBorder(
+                        Positioned(
+                          top: 4,
+                          right: 12,
+                          child: Chip(
+                            padding: EdgeInsets.symmetric(vertical: 4,horizontal: 2),
+                            side: BorderSide(
+                              style: BorderStyle.none,
+                            ),
+                            shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadiusGeometry.circular(20)
-                              ),
-                              avatar: Icon(
-                                user.isActive ? Iconsax.user_tag : Iconsax.user_remove,
-                                color: Colors.white,
-                              ),
-                              label: Text(
-                                user.isActive ? "Active" : "Inactive",
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor:
-                              user.isActive ? Colors.green : Colors.redAccent,
                             ),
-                          ),
-                        ]
-                      ),
-                      const SizedBox(height: 24),
-                  
-                      // 🌟 Edit Button
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 14, horizontal: 24),
-                          elevation: 5,
-                          shadowColor: Colors.indigo.shade300,
-                        ),
-                        icon: const Icon(Iconsax.edit, color: Colors.white),
-                        label: const Text("Edit Profile",
-                            style: TextStyle(color: Colors.white)),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  EditProfileScreen(userData: userData),
+                            avatar: Icon(
+                              status['key']??false ? Iconsax.user_tag : Iconsax.user_remove,
+                              color: Colors.white,
                             ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 10,),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 14, horizontal: 24),
-                          elevation: 5,
-                          shadowColor: Colors.blue.shade300,
-                        ),
-                        icon: const Icon(Iconsax.password_check, color: Colors.white),
-                        label: const Text("Change Password",
-                            style: TextStyle(color: Colors.white)),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  ChangePasswordScreen(),
+                            label: Text( status['label']??'',
+                              // user.isActive ? "Active" : "Inactive",
+                              style: const TextStyle(color: Colors.white),
                             ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20,),
-                      // 🌟 Details Card
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12.0,bottom: 0),
-                        child: Text('User Details',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),),
-                      ),
-                      Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        elevation: 6,
-                        shadowColor: Colors.indigo.withOpacity(0.2),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20,horizontal: 8),
-                          child: Column(
-                            children: [
-                              _buildDetailTile(Iconsax.sms, "Email",
-                                  userData["email"].toString().isEmpty
-                                      ? "Not Provided"
-                                      : userData["email"]),
-                              _buildDetailTile(
-                                  Iconsax.call, "Phone Number", userData["phone_number"]),
-                              _buildDetailTile(Iconsax.calendar, "Joined Date", joinedDate),
-                              _buildDetailTile(Iconsax.location, "Constituency",
-                                  userData["constituency_name"].toString()),
-                              _buildDetailTile(Iconsax.map, "State",
-                                  userData["state"].toString()),
-                              _buildDetailTile(Iconsax.buildings, "District",
-                                  userData["district"].toString()),
-                              _buildDetailTile(Iconsax.location_tick, "City",
-                                  userData["city"].toString()),
-                              _buildDetailTile(Iconsax.gps, "Pin Code",
-                                  userData["pin_code"].toString()),
-                              _buildDetailTile(Iconsax.home, "Address",
-                                  userData["address"].toString()),
-                            ],
+                            backgroundColor:
+                            status['key']??false ? Colors.green : Colors.redAccent,
                           ),
                         ),
-                      ),
-                    ],
+                      ]
                   ),
-                );
-              } else {
-                return const Center(
-                  child: Text('Something went wrong !!!'),
-                );
-              }
-            },
-          ),
-        );
-      },
+                  const SizedBox(height: 24),
+
+                  // 🌟 Edit Button
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 24),
+                      elevation: 5,
+                      shadowColor: Colors.indigo.shade300,
+                    ),
+                    icon: const Icon(Iconsax.edit, color: Colors.white),
+                    label: const Text("Edit Profile",
+                        style: TextStyle(color: Colors.white)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              EditProfileScreen(userData: userData,onUpdate: (){
+                                setState(() {
+
+                                });
+                              },),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10,),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 24),
+                      elevation: 5,
+                      shadowColor: Colors.blue.shade300,
+                    ),
+                    icon: const Icon(Iconsax.password_check, color: Colors.white),
+                    label: const Text("Change Password",
+                        style: TextStyle(color: Colors.white)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ChangePasswordScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20,),
+                  // 🌟 Details Card
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12.0,bottom: 0),
+                    child: Text('User Details',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 16),),
+                  ),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 6,
+                    shadowColor: Colors.indigo.withOpacity(0.2),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20,horizontal: 8),
+                      child: Column(
+                        children: [
+                          _buildDetailTile(Iconsax.sms, "Email",
+                              userData["email"].toString().isEmpty || userData['email'] == null
+                                  ? "Not Provided"
+                                  : userData["email"]),
+                          _buildDetailTile(
+                              Iconsax.call, "Phone Number", userData["phone_number"]),
+                          _buildDetailTile(Iconsax.calendar, "Joined Date", joinedDate),
+                          _buildDetailTile(Iconsax.location, "Constituency",
+                              userData["constituency_name"] is Map  && userData['constituency_name'] != null ? userData['constituency_name']['name']??'N/A'.toString():'N/A'),
+                          _buildDetailTile(Iconsax.map, "State",
+                              userData["state"] is Map && userData['state'] != null ? userData['state']['name']??'N/A'.toString():'N/A'),
+                          _buildDetailTile(Iconsax.buildings, "District",
+                              userData["district"] is Map && userData["district"] != null ? userData["district"]['name']??'N/A'.toString():'N/A'),
+                          _buildDetailTile(Iconsax.location_tick, "City",
+                              userData["city"] is Map && userData["city"] != null ? userData["city"]['name']??'N/A'.toString() : 'N/A'),
+                          _buildDetailTile(Iconsax.gps, "Pin Code",
+                              userData["pin_code"]??'N/A'.toString()),
+                          _buildDetailTile(Iconsax.home, "Address",
+                              userData["address"]??'N/A'.toString()),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            return const Center(
+              child: Text('Something went wrong !!!'),
+            );
+          }
+        },
+      ),
     );
   }
 
@@ -483,6 +495,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<Map<String,dynamic>?> _getProfileDetailsFromAPI()async{
+    final isLogin = prefs.getBool(Consts.isLogin)??false;
+    if(!isLogin){
+      return null;
+    }
     final accessToken = prefs.getString(Consts.accessToken);
     try{
       final url = Uri.https(Urls.baseUrl,Urls.getProfileDetails);
@@ -496,6 +512,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final status = data['success']??false;
         if(status){
           final values = data['data'];
+          prefs.setString(Consts.name, '${values['first_name'].toString()} ${values['last_name'].toString()}');
+          prefs.setString(Consts.photo,values['photo']??'');
+          context.read<AppUser>().update(
+            photo: prefs.getString(Consts.photo),
+            name: prefs.getString(Consts.name),
+          );
           return values;
         }
       }else{
@@ -506,15 +528,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     return null;
 }
-}
 
+
+}
 
 
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
-
-  const EditProfileScreen({super.key, required this.userData});
+  final VoidCallback? onUpdate;
+  const EditProfileScreen({super.key, required this.userData,this.onUpdate});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -524,10 +547,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _constituencyController= TextEditingController();
-  final TextEditingController _stateController = TextEditingController();
-  final TextEditingController _districtController = TextEditingController() ;
-  final TextEditingController _cityController = TextEditingController();
   final TextEditingController _pinCodeController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
@@ -535,17 +554,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   @override
-  void initState() {
+  void initState(){
     super.initState();
-    _firstNameController.text = widget.userData["first_name"].toString();
-    _lastNameController.text = widget.userData["last_name"].toString();
-    _emailController.text = widget.userData["email"].toString();
-    _constituencyController.text =  widget.userData["constituency_name"].toString();
-    _stateController.text = widget.userData["state"].toString();
-    _districtController.text =widget.userData["district"].toString();
-    _cityController.text =widget.userData["city"].toString();
-    _pinCodeController.text = widget.userData["pin_code"].toString();
-    _addressController.text = widget.userData["address"].toString();
+    WidgetsBinding.instance.addPostFrameCallback((duration){
+      initialized();
+    });
   }
 
   Future<void> _pickImage() async {
@@ -606,10 +619,64 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               _buildTextField("First Name", _firstNameController),
               _buildTextField("Last Name", _lastNameController),
               _buildTextField("Email", _emailController,required: false),
-              _buildTextField("Constituency", _constituencyController,required: false),
-              _buildTextField("State", _stateController,required: false),
-              _buildTextField("District", _districtController,required: false),
-              _buildTextField("City", _cityController,required: false),
+              Consumer<LocationFilterData>(
+                builder: (context,value,child){
+                  return Wrap(
+                    alignment: WrapAlignment.spaceEvenly,
+                    children: [
+                      BuildDropdown('State',LocationFilterData.stateList.map<DropdownMenuItem<String>>(
+                              (e) => DropdownMenuItem<String>(
+                                  child: Text(e['name']??''.toString()),
+                                value: e['id'].toString(),
+                              )
+                      ).toList(),
+                          value: LocationFilterData.selectedState,
+                        onChange: value.onStateChanged
+                      ),
+                      BuildDropdown('Constituency Category',
+                          LocationFilterData.constituencyTypeList.map<DropdownMenuItem<String>>(
+                                  (e) => DropdownMenuItem<String>(
+                                child: Text(e['name']??''.toString()),
+                                value: e['id'].toString(),
+                              )
+                          ).toList(),
+                        value: LocationFilterData.selectedConstituencyType,
+                        onChange: value.onConstituencyTypeChanged
+                      ),
+                      BuildDropdown('Constituency',
+                          LocationFilterData.constituencyList.map<DropdownMenuItem<String>>(
+                                  (e) => DropdownMenuItem<String>(
+                                child: Text(e['name']??''.toString()),
+                                value: e['id'].toString(),
+                              )
+                          ).toList(),
+                        value: LocationFilterData.selectedConstituency,
+                        onChange: value.onConstituencyChanged
+                      ),
+                      BuildDropdown('District',
+                          LocationFilterData.districtList.map<DropdownMenuItem<String>>(
+                                  (e) => DropdownMenuItem<String>(
+                                child: Text(e['name']??''.toString()),
+                                value: e['id'].toString(),
+                              )
+                          ).toList(),
+                        value: LocationFilterData.selectedDistrict,
+                        onChange: value.onDistrictChanged
+                      ),
+                      BuildDropdown('City',
+                          LocationFilterData.cityList.map<DropdownMenuItem<String>>(
+                                  (e) => DropdownMenuItem<String>(
+                                child: Text(e['name']??''.toString()),
+                                value: e['id'].toString(),
+                              )
+                          ).toList(),
+                      value: LocationFilterData.selectedCity,
+                        onChange: value.onCityChanged
+                      ),
+                    ],
+                  );
+                },
+              ),
               _buildTextField("Pin Code", _pinCodeController,
                   keyboard: TextInputType.number,required: false),
               _buildTextField("Address", _addressController, maxLines: 4,required: false),
@@ -636,30 +703,58 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller,
-      {TextInputType keyboard = TextInputType.text, int maxLines = 1,bool required = true}) {
+
+  Widget _buildTextField(
+      String label,
+      TextEditingController controller, {
+        TextInputType keyboard = TextInputType.text,
+        int maxLines = 1,
+        bool required = true,
+      }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextFormField(
-        validator: required ? (value){
-          if(value == null || value.isEmpty || value == 'null'){
-            return 'Please enter ${label}';
-          }
-          return null;
-        }:null,
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboard,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.indigo)),
-        ),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextFormField(
+              controller: controller,
+              keyboardType: keyboard,
+              maxLines: maxLines,
+              validator: required
+                  ? (value) {
+                if (value == null || value.isEmpty || value == 'null') {
+                  return 'Please enter $label';
+                }
+                return null;
+              }
+                  : null,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                filled: true,
+                fillColor: Colors.transparent,
+                focusedBorder: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                contentPadding:
+                EdgeInsets.zero,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
 
   Future<void> _updateProfile() async {
     if(!(_formKey.currentState?.validate()??false)){
@@ -686,15 +781,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final body = {
       "first_name": _firstNameController.text,
       "last_name": _lastNameController.text,
-      "photo":  base64Profile,
-      "constituency_name": _constituencyController.text,
-      "state": _stateController.text,
-      "district": _districtController.text,
-      "city": _cityController.text,
+      "email" : _emailController.text,
+      "constituency_name": LocationFilterData.selectedConstituency??'',
+      "state": LocationFilterData.selectedState??'',
+      "district": LocationFilterData.selectedDistrict??'',
+      "city": LocationFilterData.selectedCity??'',
       "pin_code": _pinCodeController.text,
       "address": _addressController.text,
       "app_name": "mobile",
     };
+    if(base64Profile != null){
+      body['photo'] = base64Profile;
+    }
 
     print("Updated data: $body");
 
@@ -710,10 +808,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
       print('Response code: ${response.statusCode}, Body: ${response.body}');
       if (response.statusCode == 200) {
-
-        Navigator.pop(context, true);
+        final data = json.decode(response.body) as Map<String,dynamic>;
+        final message = data['message'];
+        final status = data['success']??false;
+        CustomMessageDialog.show(context, title: 'Profile Updated', message: message,onPressed: (){
+          widget.onUpdate?.call();
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+        });
       } else {
-        handleApiResponse(context, response);
+        SnackBarHelper.show(context, 'Something went wrong !!');
       }
     } catch (e) {
       print("Update error: $e");
@@ -724,6 +828,58 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
+
+  @override
+  void dispose() {
+    super.dispose();
+    LocationFilterData.selectedCity = null;
+    LocationFilterData.selectedState = null;
+    LocationFilterData.selectedConstituencyType = null;
+    LocationFilterData.selectedConstituency = null;
+    LocationFilterData.selectedDistrict = null;
+  }
+
+  void initialized()async {
+    final provider = context.read<LocationFilterData>();
+    final init = widget.userData;
+    final state = init['state']??{};
+    final district = init['district']??{};
+    final constituency = init['constituency_name']??{};
+    final constituencyCategory = constituency['category']??{};
+    final city = init['city']??{};
+    _firstNameController.text = init["first_name"]??''.toString();
+    _lastNameController.text = init["last_name"]??''.toString();
+    _emailController.text = init["email"]??''.toString();
+    _pinCodeController.text = init["pin_code"]??''.toString();
+    _addressController.text = init["address"]??''.toString();
+
+    if(LocationFilterData.stateList.isNotEmpty && LocationFilterData.constituencyTypeList.isNotEmpty){
+      LocationFilterData.selectedState = state['id'] != null ? state['id'].toString():null;
+      LocationFilterData.selectedConstituencyType = constituencyCategory['id'] != null ?constituencyCategory['id'].toString() :null;
+      provider.notify();
+    }
+
+
+    if(LocationFilterData.selectedState != null && LocationFilterData.selectedConstituencyType != null){
+      await provider.getConstituencyList(constituencyTypeId: LocationFilterData.selectedConstituencyType!, stateId: LocationFilterData.selectedState!);
+      if(LocationFilterData.constituencyList.isNotEmpty){
+        LocationFilterData.selectedConstituency = constituency['id'] != null ? constituency['id'].toString():null;
+        provider.notify();
+      }
+    }
+
+    if(LocationFilterData.selectedState != null){
+      await provider.getDistrictList(stateId: LocationFilterData.selectedState!);
+      LocationFilterData.selectedDistrict = district['id'] != null ? district['id'].toString():null;
+      provider.notify();
+    }
+    if(LocationFilterData.selectedDistrict != null){
+      await provider.getCityList(districtId: LocationFilterData.selectedDistrict!);
+      LocationFilterData.selectedCity = city['id'] != null ?city['id'].toString() :null;
+      provider.notify();
+    }
+
+  }
 
 
 }

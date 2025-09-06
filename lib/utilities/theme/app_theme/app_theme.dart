@@ -12,7 +12,7 @@ class AppTheme{
       foregroundColor: Colors.white,
     ),
     primarySwatch: Colors.indigo,
-    textTheme: GoogleFonts.robotoSlabTextTheme().copyWith(), // ✨ Election-suitable font
+    textTheme: GoogleFonts.joanTextTheme().copyWith(), // ✨ Election-suitable font
     useMaterial3: true,
     elevatedButtonTheme: ElevatedButtonThemeData(style: TElevatedButtonTheme.buttonStyle),
     inputDecorationTheme: TTextFieldTheme.inputDecoration

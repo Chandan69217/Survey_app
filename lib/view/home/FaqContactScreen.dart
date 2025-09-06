@@ -14,10 +14,10 @@ class FaqContactScreen extends StatefulWidget {
   FaqContactScreen({super.key,this.contactUsKey});
 
   @override
-  State<FaqContactScreen> createState() => _FaqContactScreenState();
+  State<FaqContactScreen> createState() => FaqContactScreenState();
 }
 
-class _FaqContactScreenState extends State<FaqContactScreen> {
+class FaqContactScreenState extends State<FaqContactScreen> {
   final ValueNotifier<bool> _isLoading = ValueNotifier<bool>(false);
 
   final TextEditingController _nameController = TextEditingController();
@@ -27,6 +27,11 @@ class _FaqContactScreenState extends State<FaqContactScreen> {
   final TextEditingController _subjectController = TextEditingController();
 
   final TextEditingController _messageController = TextEditingController();
+
+  final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _subjectFocusNode = FocusNode();
+  final FocusNode _messageFocusNode = FocusNode();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -158,7 +163,6 @@ class _FaqContactScreenState extends State<FaqContactScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-
               // Contact Form
               ValueListenableBuilder(
                 valueListenable: _isLoading,
@@ -186,6 +190,7 @@ class _FaqContactScreenState extends State<FaqContactScreen> {
                                 child: CustomTextField(
                                     hint: "Your Name",
                                   controller: _nameController,
+                                  focusNode: _nameFocusNode,
                                 ),
                               ),
                               SizedBox(width: 12),
@@ -193,6 +198,7 @@ class _FaqContactScreenState extends State<FaqContactScreen> {
                                 child: CustomTextField(
                                     hint: "Your Email",
                                   controller: _emailController,
+                                  focusNode: _emailFocusNode,
                                 ),
                               ),
                             ],
@@ -201,11 +207,13 @@ class _FaqContactScreenState extends State<FaqContactScreen> {
                           CustomTextField(
                               hint: "Subject",
                             controller: _subjectController,
+                            focusNode: _subjectFocusNode,
                           ),
                           const SizedBox(height: 12),
                           CustomTextField(
                             hint: "Message",
                             controller: _messageController,
+                            focusNode: _messageFocusNode,
                             maxLines: 5,
                           ),
                           const SizedBox(height: 20),
@@ -236,6 +244,16 @@ class _FaqContactScreenState extends State<FaqContactScreen> {
       ],
     );
   }
+
+
+
+  void unFocus() {
+    _nameFocusNode.unfocus();
+    _emailFocusNode.unfocus();
+    _subjectFocusNode.unfocus();
+    _messageFocusNode.unfocus();
+  }
+
 
   void _sendMessage()async {
     if(!(_formKey.currentState?.validate()??false)){
@@ -270,6 +288,19 @@ class _FaqContactScreenState extends State<FaqContactScreen> {
       print('Exception: ${exception},Trace: ${trace}');
     }
     _isLoading.value = false;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _nameController.dispose();
+    _nameFocusNode.dispose();
+    _emailController.dispose();
+    _emailFocusNode.dispose();
+    _subjectController.dispose();
+    _subjectFocusNode.dispose();
+    _messageController.dispose();
+    _messageFocusNode.dispose();
   }
 }
 
@@ -350,6 +381,7 @@ class FaqItem extends StatelessWidget {
       ),
     );
   }
+
 }
 
 class ContactCard extends StatelessWidget {
@@ -423,12 +455,15 @@ class CustomTextField extends StatelessWidget {
   final int maxLines;
   final TextEditingController controller;
   final bool isRequired;
-  const CustomTextField({super.key, required this.hint, this.maxLines = 1,required this.controller,this.isRequired = true});
+  final FocusNode? focusNode;
+  const CustomTextField({super.key,this.focusNode ,required this.hint, this.maxLines = 1,required this.controller,this.isRequired = true});
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       maxLines: maxLines,
+      autofocus: false,
+      focusNode: focusNode,
       controller: controller,
       validator: (value){
         if(value == null || value.isEmpty){

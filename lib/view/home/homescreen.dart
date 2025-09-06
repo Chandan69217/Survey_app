@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:survey_app/api_service/api_urls.dart';
 import 'package:survey_app/main.dart';
 import 'package:survey_app/model/AppUser.dart';
 import 'package:survey_app/utilities/consts.dart';
@@ -21,7 +23,7 @@ import 'package:survey_app/view/home/RAISE/RaiseQueryScreen.dart';
 import 'package:survey_app/view/home/slider/slider_screen.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'PublicChatDialog/PublicChatDialog.dart';
+import 'PublicChatDialog/PublicChatScreen.dart';
 import 'PublicRepresentative/PublicRepresentativeSlider.dart';
 import 'RepresentativePartySlider.dart';
 import 'RepresentativeSection.dart';
@@ -42,12 +44,13 @@ class _HomeScreenState extends State<HomeScreen> {
   final _candidateKey = GlobalKey();
   final _legendaryTeamKey = GlobalKey();
   final _contactUsKey = GlobalKey();
-  final _faqKey = GlobalKey();
+  final _faqKey = GlobalKey<FaqContactScreenState>();
   final _aboutKey = GlobalKey();
 
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((duration){
+      getProfileDetailsFromAPI();
       getLocationPermission(context);
     });
     super.initState();
@@ -64,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       drawer: _drawerUI(),
       body: GestureDetector(
         onTap: (){
-          FocusScope.of(context).unfocus();
+          _faqKey.currentState?.unFocus();
         },
         child: SafeArea(
           child: Padding(
@@ -78,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     delay: 0.5,
                     child: SizedBox(height: 220, child: SliderScreen()),
                   ),
-                  const SizedBox(height: 2,),
+                  const Divider(height: 0.5,color: Colors.white70,),
                   SlideInAnimation(
                     direction: SlideDirection.right,
                     delay: 0.7,
@@ -221,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: SpeedDial(
         icon: Icons.add,
         activeIcon: Icons.close,
-        backgroundColor: const Color(0xFF123763),
+        backgroundColor: Colors.deepOrange,
         foregroundColor: Colors.white,
         overlayColor: Colors.black,
         overlayOpacity: 0.3,
@@ -252,10 +255,12 @@ class _HomeScreenState extends State<HomeScreen> {
               // }
               final status = await getLocationPermission(context);
               if(status == LocationPermissionStatus.granted){
-                showDialog(
-                  context: context,
-                  builder: (context) => PublicChatDialog(channel: WebSocketChannel.connect( Uri.parse('ws://truesurvey.in/ws/chat-discussion/')),),
-                );
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context)=> PublicChatScreen(channel: WebSocketChannel.connect( Uri.parse('ws://truesurvey.in/ws/chat-discussion/')))));
+                // showDialog(
+                //   context: context,
+                //   builder: (context) => PublicChatDialog(channel: WebSocketChannel.connect( Uri.parse('ws://truesurvey.in/ws/chat-discussion/')),),
+                // );
               }else{
                 CustomMessageDialog.show(context, title: 'Warning', message: 'Please allow location to access public chat !!');
               }
@@ -263,110 +268,136 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      onDrawerChanged: (isOpen){
+        _faqKey.currentState?.unFocus();
+      },
     );
   }
 
   Drawer _drawerUI() {
     return Drawer(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: EdgeInsets.fromLTRB(12,12,12,4),
-            height: 300,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: CustColors.background1,
-            ),
-            child: SafeArea(
-                child: Consumer<AppUser>(
-                  builder: (BuildContext context, AppUser value, Widget? child) {
-                    return  value.isLogin ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        CustomNetworkImage(
-                          height: 130,
-                          width: 130,
-                          imageUrl: value.photo,
-                        ),
-                        const SizedBox(height: 4.0,),
-                        Text(value.name??'N/A',style: TextStyle(fontSize: 18,color: Colors.white),),
-                        const SizedBox(height: 4,),
-                        OutlinedButton.icon(
-                          onPressed: ()async{
-                            Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfileScreen()));
-                          },
-                          label: Text('View Profile'),
-                          icon: Icon(Iconsax.profile_circle),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.deepOrange,
+      child: Container(
+        color: CustColors.background2,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.fromLTRB(12,12,12,4),
+              height: 300,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: CustColors.background1,
+              ),
+              child: SafeArea(
+                  child: Consumer<AppUser>(
+                    builder: (BuildContext context, AppUser value, Widget? child) {
+                      return  value.isLogin ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          CustomNetworkImage(
+                            height: 130,
+                            width: 130,
+                            imageUrl: value.photo,
+                            borderRadius: BorderRadius.circular(100),
                           ),
-                        )
-                      ],
-                    ) : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: () async{
-                            Navigator.of(context).push(MaterialPageRoute(builder: (context)=>CitizenLoginScreen()));
-                          },
-                          icon: Icon(Icons.login),
-                          label: Text("Login"),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.blueAccent,
-                            side: BorderSide(
-                              color: Colors.pink
-                            )
+                          const SizedBox(height: 4.0,),
+                          Text(value.name??'N/A',style: TextStyle(fontSize: 18,color: Colors.white),),
+                          const SizedBox(height: 4,),
+                          OutlinedButton.icon(
+                            onPressed: ()async{
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfileScreen()));
+                            },
+                            label: Text('View Profile'),
+                            icon: Icon(Iconsax.profile_circle),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.deepOrange,
+                            ),
+                          )
+                        ],
+                      ) : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () async{
+                              Navigator.of(context).push(MaterialPageRoute(builder: (context)=>CitizenLoginScreen()));
+                            },
+                            icon: Icon(Icons.login),
+                            label: Text("Login"),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: BorderSide(
+                                color: Colors.white
+                              )
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8,),
-                        Text('Login to True Survey',style: TextStyle(color: Colors.white70,fontSize: 18),),
-                      ],
-                    );
-                  },
-                ),
-            ),
-          ),
-          ListView(shrinkWrap: true, 
-              padding: EdgeInsets.all(12),
-              children: [
-                _buildInfoTile('Political Party', Iconsax.people,color: Colors.indigo,onTap: (){_scrollTo(_politicalPartyKey);}),
-                _buildInfoTile('Candidate', Iconsax.personalcard,color: Colors.orange,onTap: (){_scrollTo(_candidateKey);}),
-                _buildInfoTile('Legendary Team', Iconsax.profile_2user,color: Colors.purple,onTap: (){_scrollTo(_legendaryTeamKey);}),
-                _buildInfoTile('Contact', Iconsax.call,color: Colors.teal,onTap: (){_scrollTo(_contactUsKey);}),
-                _buildInfoTile('Freq Asked Question', Iconsax.message,color: Colors.green,onTap: (){_scrollTo(_faqKey);}),
-                _buildInfoTile('About', Iconsax.info_circle,color: Colors.blue,onTap: (){_scrollTo(_aboutKey);}),
-                const SizedBox(height: 20,),
-                // Logout Button
-            Consumer<AppUser>(
-              builder: (BuildContext context, AppUser value, Widget? child) {
-                if(value.isLogin){
-                  return ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<AppUser>().reset();
-                      SnackBarHelper.show(context, 'Log Out Successfully');
-                      // Navigator.of(context).pop();
+                          const SizedBox(height: 8,),
+                          Text('Login to True Survey',style: TextStyle(color: Colors.white,fontSize: 18),),
+                        ],
+                      );
                     },
-                    icon: const Icon(Icons.logout),
-                    label: const Text("Logout"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  );
-                }else{
-                  return const SizedBox();
-                }
-              },
+                  ),
+              ),
             ),
-          ]),
-        ],
+            const Divider(height: 0.5,),
+            ListView(shrinkWrap: true,
+                padding: EdgeInsets.all(12),
+                children: [
+                  _buildInfoTile('Political Party', Iconsax.people,color: Colors.indigo,onTap: (){_scrollTo(_politicalPartyKey);}),
+                  _buildInfoTile('Candidate', Iconsax.personalcard,color: Colors.orange,onTap: (){_scrollTo(_candidateKey);}),
+                  _buildInfoTile('Legendary Team', Iconsax.profile_2user,color: Colors.purple,onTap: (){_scrollTo(_legendaryTeamKey);}),
+                  _buildInfoTile('Contact', Iconsax.call,color: Colors.teal,onTap: (){_scrollTo(_contactUsKey);}),
+                  _buildInfoTile('Freq Asked Question', Iconsax.message,color: Colors.green,onTap: (){_scrollTo(_faqKey);}),
+                  _buildInfoTile('About', Iconsax.info_circle,color: Colors.blue,onTap: (){_scrollTo(_aboutKey);}),
+                  const SizedBox(height: 20,),
+                  // Logout Button
+              Consumer<AppUser>(
+                builder: (BuildContext context, AppUser value, Widget? child) {
+                  if(value.isLogin){
+                    return ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<AppUser>().reset();
+                        SnackBarHelper.show(context, 'Log Out Successfully');
+                        // Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.logout),
+                      label: const Text("Logout"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  }else{
+                    return const SizedBox();
+                  }
+                },
+              ),
+            ]),
+            // version & powered by
+            Spacer(),
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text('Version 1.0',style: TextStyle(color: Colors.grey),),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Powered by ',style: TextStyle(color: Colors.grey),),
+                      const SizedBox(width: 2,),
+                      Image.asset('assets/powered_by/powered_by_logo.webp',width: 40,height: 40,fit: BoxFit.contain,)
+                    ],
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -392,9 +423,42 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> getProfileDetailsFromAPI()async{
+    final isLogin = prefs.getBool(Consts.isLogin)??false;
+    if(!isLogin){
+      return;
+    }
+    final accessToken = prefs.getString(Consts.accessToken);
+    try{
+      final url = Uri.https(Urls.baseUrl,Urls.getProfileDetails);
+      final response = await get(url,headers: {
+        'Authorization' : 'Bearer $accessToken',
+        'content-type' :'Application/json'
+      });
+      print('Response code: ${response.statusCode},Body: ${response.body}');
+      if(response.statusCode == 200){
+        final data = json.decode(response.body) as Map<String,dynamic>;
+        final status = data['success']??false;
+        if(status){
+          final values = data['data'];
+          prefs.setString(Consts.name, '${values['first_name'].toString()} ${values['last_name'].toString()}');
+          prefs.setString(Consts.photo,values['photo']??'');
+          context.read<AppUser>().update(
+            photo: prefs.getString(Consts.photo),
+            name: prefs.getString(Consts.name),
+          );
+        }
+      }
+    }catch(exception,trace){
+      print('Exception: ${exception} Trace: ${trace}');
+    }
+
+  }
+
 }
 
-// Animation helper classes
+
+
 enum SlideDirection { left, right, up, down }
 
 class FadeInAnimation extends StatelessWidget {
