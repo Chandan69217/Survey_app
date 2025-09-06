@@ -28,9 +28,7 @@ class _CustomCircularIndicatorState extends State<CustomCircularIndicator>
   @override
   void initState() {
     super.initState();
-    if (widget.value == null || widget.value == 1) {
-      _c = AnimationController(vsync: this, duration: widget.duration)..repeat();
-    }
+    _c = AnimationController(vsync: this, duration: widget.duration)..repeat();
   }
 
   @override

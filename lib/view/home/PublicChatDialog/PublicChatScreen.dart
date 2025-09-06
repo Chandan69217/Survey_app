@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -17,6 +18,7 @@ import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
 import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
+import 'package:survey_app/widgets/custom_network_image.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:path/path.dart' as p;
 import 'package:video_player/video_player.dart';
@@ -32,6 +34,8 @@ class PublicChatScreen extends StatefulWidget {
 class _PublicChatScreenState extends State<PublicChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _message = [];
+  final Map<String,ValueNotifier<double>> progressValues = {};
+
   static Uri _wsURL = Uri.parse('ws://truesurvey.in/ws/chat-discussion/');
   late final WebSocketChannel _channel;
   int _currentPage = 1;
@@ -105,6 +109,18 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
         // Listen once
         _channel.stream.listen((data) {
           final decoded = json.decode(data) as Map<String, dynamic>;
+          if(decoded['event'] == 'deleted'){
+            final id = decoded['data']['id'];
+            final index = _message.indexWhere((m)=>m.id == id);
+            if(index != -1){
+              if(mounted){
+                setState(() {
+                  _message.removeAt(index);
+                });
+              }
+            }
+            return;
+          }
           final newMsg = ChatMessage.fromJson(decoded['data']);
           if(newMsg.deviceID != deviceId){
             if(mounted)
@@ -112,18 +128,6 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
               _message.insert(0, newMsg);
             });
           }
-          // setState(() {
-          //   final tempIndex = _message.indexWhere(
-          //     (m) =>
-          //         m.deviceID == newMsg.deviceID &&
-          //         m.statement == newMsg.statement &&
-          //         m.status == MessageStatus.sending,
-          //   );
-          //   if (tempIndex != -1) {
-          //     _message.removeAt(tempIndex); // delete temp
-          //   }
-          //
-          // });
         });
       } catch (exception, trace) {
         print('Exception: $exception, Trace: $trace');
@@ -197,6 +201,7 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
                                   final msgIndex = index - 1;
                                   return ChatMessageCard(
                                     key: ValueKey(_message[msgIndex].id),
+                                    progress: progressValues[_message[msgIndex].id.toString()],
                                     onLongPressed: () async {
                                       // get widget position
                                       var renderBox;
@@ -238,13 +243,21 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
                                       );
 
                                       if (result == "delete") {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text("Message deleted"),
-                                          ),
-                                        );
+                                        final tempMsg = _message[msgIndex];
+                                        final tempIndex = msgIndex;
+                                        if(mounted){
+                                          setState(() {
+                                            _message.removeAt(msgIndex);
+                                          });
+                                        }
+                                        final isDeleted = await PublicChatAPIService.deleteMessage(messageId: tempMsg.id.toString(), deviceId: deviceId);
+                                        if(!isDeleted){
+                                          if(mounted){
+                                            setState(() {
+                                              _message.insert(tempIndex, tempMsg);
+                                            });
+                                          }
+                                        }
                                       }
                                     },
                                     data: _message[msgIndex],
@@ -366,6 +379,7 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
                                                         0,
                                                         tempMsg,
                                                       );
+                                                      progressValues[tempId.toString()] = ValueNotifier<double>(0);
                                                     });
 
                                                     final File? compressedFile = await PublicChatAPIService.compressVideo(file!);
@@ -389,7 +403,8 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
                                                      return;
                                                    }
 
-                                                   await PublicChatAPIService.uploadFile(sessionId: sessionId,file:compressedFile,onProgress: (progress)async{
+                                                   PublicChatAPIService.uploadFile(sessionId: sessionId,file:compressedFile,onProgress: (progress)async{
+                                                     progressValues[tempId.toString()]?.value = progress;
                                                       if(progress == 1){
                                                         final id = await PublicChatAPIService.sendMessageWithFile(statement: statement, deviceId: deviceId, sessionID: sessionId);
                                                         if(id != null){
@@ -397,7 +412,8 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
                                                           if(index != -1){
                                                             if(mounted)
                                                               setState(() {
-                                                                _message[index].update(status: MessageStatus.sent,);
+                                                                _message[index].update(status: MessageStatus.sent,id: id);
+                                                                progressValues.remove(tempId.toString());
                                                               });
                                                           }
                                                         }else{
@@ -838,7 +854,9 @@ class _ChatMessageCardState extends State<ChatMessageCard> {
   @override
   void initState() {
     super.initState();
-
+    if(widget.progress != null){
+      print('Progress bar received');
+    }
     if (widget.data.document != null) {
       if (widget.data.document is File) {
         _filePath = (widget.data.document as File).path;
@@ -913,7 +931,7 @@ class _ChatMessageCardState extends State<ChatMessageCard> {
                   widget.progress != null ?
                     ValueListenableBuilder<double>(
                       valueListenable: widget.progress!,
-                      builder: (context,progress,child)=> CustomCircularIndicator(value: progress,),
+                      builder: (context,progress,child)=> CustomCircularIndicator(value: progress,colors: [Colors.white,Colors.white70,],),
                     )  :
                   Icon(
                     Icons.play_circle_fill,
@@ -948,21 +966,51 @@ class _ChatMessageCardState extends State<ChatMessageCard> {
           padding: EdgeInsetsGeometry.only(top: 6.0),
           child: ClipRRect(
             borderRadius: borderRadius,
-            child: Container(
-              constraints: const BoxConstraints(
-                maxHeight: 250,
-                minHeight: 160,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                constraints: const BoxConstraints(
+                  maxHeight: 250,
+                  minHeight: 160,
+                ),
+                color: Colors.black12,
+                child: _filePath!.startsWith("http")
+                    ? CachedNetworkImage(
+                  imageUrl: _filePath!,
+                  fit: BoxFit.cover,
+                  imageBuilder: (context, imageProvider) => Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: imageProvider,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  placeholder: (context, url) => Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/Placeholder_image.webp',),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2,color: Colors.white,),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 40),
+                )
+                    : Image.file(
+                  File(_filePath!),
+                  fit: BoxFit.cover,
+                ),
               ),
-              color: Colors.black12,
-              child: _filePath!.startsWith("http")
-                  ? Image.network(
-                _filePath!,
-                fit: BoxFit.cover,
-              )
-                  : Image.file(
-                File(_filePath!),
-                fit: BoxFit.cover,
-              ),
+                widget.progress != null ?
+                ValueListenableBuilder<double>(
+                  valueListenable: widget.progress!,
+                  builder: (context,progress,child)=> CustomCircularIndicator(value: progress,colors: [Colors.white,Colors.white70,],),
+                )  : SizedBox.shrink()
+              ]
             ),
           ),
         ),
@@ -1499,21 +1547,46 @@ class _OpenMediaScreenState extends State<OpenMediaScreen> {
       backgroundColor: Colors.black,
       child: Stack(
         children: [
-          Center(
-            child: widget.isVideo
-                ? (_videoController != null &&
-                _videoController!.value.isInitialized)
-                ? AspectRatio(
-              aspectRatio: _videoController!.value.aspectRatio,
-              child: VideoPlayer(_videoController!),
-            )
-                : const CircularProgressIndicator(color: Colors.white)
-                : InteractiveViewer(
-              minScale: 0.8,
-              maxScale: 4.0,
-              child: widget.media is File
-                  ? Image.file(widget.media, fit: BoxFit.contain)
-                  : Image.network(widget.media, fit: BoxFit.contain),
+
+          InteractiveViewer(
+            minScale: 0.8,
+            maxScale: 4.0,
+            panEnabled: true,
+            child: Center(
+              child: widget.isVideo
+                  ? (_videoController != null &&
+                  _videoController!.value.isInitialized)
+                  ? AspectRatio(
+                aspectRatio: _videoController!.value.aspectRatio,
+                child: VideoPlayer(_videoController!),
+              )
+                  : const CircularProgressIndicator(color: Colors.white)
+                  : widget.media is File
+                      ? Image.file(widget.media, fit: BoxFit.contain)
+                      : CachedNetworkImage(
+                imageUrl: widget.media!,
+                fit: BoxFit.contain,
+                imageBuilder: (context, imageProvider) => Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: imageProvider,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                placeholder: (context, url) => Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/Placeholder_image.webp',),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2,color: Colors.white,),
+                  ),
+                ),
+                errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 40),
+              ),
             ),
           ),
           Positioned(

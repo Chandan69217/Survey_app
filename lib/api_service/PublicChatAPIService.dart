@@ -195,115 +195,6 @@ class PublicChatAPIService {
     }
   }
 
-  // static Future<Map<String, dynamic>?> uploadFile({
-  //   required String sessionId,
-  //   required File file,
-  // }) async {
-  //   try {
-  //     final accessToken = prefs.getString(Consts.accessToken);
-  //
-  //     final headers = {
-  //       'Content-type' : 'application/json',
-  //       'Client_source': 'mobile',
-  //     };
-  //
-  //     if (accessToken != null) {
-  //       headers['Authorization'] = 'Bearer $accessToken';
-  //     }
-  //
-  //     final url = Uri.https(
-  //       Urls.baseUrl,
-  //       '/api/chat-discussion/file-uploads/$sessionId/chunk/',
-  //     );
-  //
-  //     final fileLength = await file.length();
-  //     final raf = file.openSync(mode: FileMode.read);
-  //
-  //     int chunkIndex = 0;
-  //     int offset = 0;
-  //
-  //     while (offset < fileLength) {
-  //       // read chunk
-  //       final remaining = fileLength - offset;
-  //       final bytesToRead = remaining > chunkSize ? chunkSize : remaining;
-  //       final chunk = raf.readSync(bytesToRead);
-  //
-  //       // create multipart request
-  //       final request = http.MultipartRequest('POST', url)
-  //         ..headers.addAll(headers)
-  //         ..fields['chunk_index'] = chunkIndex.toString()
-  //         ..files.add(
-  //           http.MultipartFile.fromBytes(
-  //             'chunk',
-  //             chunk,
-  //           ),
-  //         );
-  //
-  //       final response = await request.send();
-  //       final responseBody =
-  //       json.decode(await response.stream.bytesToString());
-  //       print('Response code: ${response.statusCode} , Body: ${responseBody}');
-  //       if (response.statusCode != 200 && response.statusCode != 201) {
-  //         print("❌ Upload failed at chunk $chunkIndex: $responseBody");
-  //         raf.closeSync();
-  //         return null;
-  //       }
-  //
-  //       print("✅ Uploaded chunk $chunkIndex");
-  //
-  //       // move offset
-  //       offset += bytesToRead;
-  //       chunkIndex++;
-  //     }
-  //
-  //     raf.closeSync();
-  //     // await sendMessageWithFile(statement: statement, deviceId: deviceId, sessionID: sessionID)
-  //     // if your backend merges and returns final file info
-  //     return {
-  //       "success": true,
-  //       "chunks_uploaded": chunkIndex,
-  //       "file": file.uri.pathSegments.last,
-  //     };
-  //   } catch (exception, trace) {
-  //     print('Exception: $exception, Trace: $trace');
-  //   }
-  //   return null;
-  // }
-
-  // static Future<Map<String,dynamic>?> uploadFile({required String sessionId,required File file})async{
-  //   try{
-  //     final accessToken = prefs.getString(Consts.accessToken);
-  //     final headers = {
-  //       'Content-type' : 'application/json',
-  //       'Client_source' : 'mobile'
-  //     };
-  //     if(accessToken != null){
-  //       headers['Authorization'] = 'Bearer ${accessToken}';
-  //     }
-  //
-  //     final url = Uri.https(Urls.baseUrl,'/api/chat-discussion/file-uploads/${sessionId}/chunk/');
-  //
-  //     final request = http.MultipartRequest('POST', url)
-  //     ..fields['chunk_index'] = chunkIndex
-  //     ..files.add(
-  //         MultipartFile(
-  //             'chunk',
-  //             chunk.openRead(),
-  //             await chunk.length(),
-  //         )
-  //     );
-  //
-  //     final response = await request.send();
-  //     if(response.statusCode == 200 || response.statusCode == 201){
-  //       final body = json.decode(await response.stream.bytesToString()) as Map<String,dynamic>;
-  //       return body;
-  //     }
-  //
-  //   }catch(exception,trace){
-  //     print('Exception: ${exception},Trace: $trace');
-  //   }
-  //   return null;
-  // }
 
   static Future<Map<String, dynamic>?> getAllPublicChat({
     required String page,
@@ -385,7 +276,7 @@ class PublicChatAPIService {
         Urls.baseUrl,
         '/api/chat-discussion/${messageId}/public-delete/',
       );
-      final response = await post(
+      final response = await delete(
         uri,
         body: json.encode({'device_id': deviceId}),
         headers: {
@@ -394,7 +285,7 @@ class PublicChatAPIService {
         },
       );
       print('Response code: ${response.statusCode} , Body: ${response.body}');
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final body = json.decode(response.body) as Map<String, dynamic>;
         final status = body['success'] ?? false;
         if (status) {
@@ -439,7 +330,7 @@ class PublicChatAPIService {
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-
+      print('Response Code: ${response.statusCode} Body : ${response.body}');
       if (response.statusCode == 200 || response.statusCode == 201) {
         print('Body: ${response.body}');
         final data = json.decode(response.body) as Map<String,dynamic>;
