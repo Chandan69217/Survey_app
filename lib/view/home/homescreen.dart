@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:http/http.dart';
@@ -7,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:survey_app/api_service/api_urls.dart';
 import 'package:survey_app/main.dart';
 import 'package:survey_app/model/AppUser.dart';
+import 'package:survey_app/model/LoginUser.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
 import 'package:survey_app/utilities/custom_dialog/CustomMessageDialog.dart';
@@ -19,7 +21,8 @@ import 'package:survey_app/view/home/FaqContactScreen.dart';
 import 'package:survey_app/view/home/OurLegendaryLeadersScreen.dart';
 import 'package:survey_app/view/home/ProfileScreen.dart';
 import 'package:survey_app/view/home/PublicRepresentative/PublicRepresentativeScreen.dart';
-import 'package:survey_app/view/home/RAISE/RaiseQueryScreen.dart';
+import 'package:survey_app/view/home/RAISE/WithConstituency/WithConstituencyRaiseQueryScreen.dart';
+import 'package:survey_app/view/home/RAISE/WithoutConstituency/WithoutConstituencyRaiseQueryScreen.dart';
 import 'package:survey_app/view/home/slider/slider_screen.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -221,52 +224,68 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       // ✨ Floating Action Button (FAB)
-      floatingActionButton: SpeedDial(
-        icon: Icons.add,
-        activeIcon: Icons.close,
-        backgroundColor: Colors.deepOrange,
-        foregroundColor: Colors.white,
-        overlayColor: Colors.black,
-        overlayOpacity: 0.3,
-        spacing: 10,
-        spaceBetweenChildren: 8,
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.question_mark),
-            backgroundColor: const Color(0xFF0054D3),
-            label: 'Raise Query',
-            labelStyle: const TextStyle(fontSize: 14),
-            onTap: () {
-              // _showRaiseProblemDialog(context);
-              Navigator.of(context).push(MaterialPageRoute(builder: (context)=>RaiseQueryScreen()));
-            },
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.chat_bubble_outline),
-            backgroundColor: const Color(0xFF00A97F),
-            label: 'Public Chat',
-            labelStyle: const TextStyle(fontSize: 14),
-            onTap: ()async {
-              // if(!(prefs.getBool(Consts.isLogin)??false)){
-              //   Navigator.of(context).push(
-              //       MaterialPageRoute(builder: (context)=>CitizenLoginScreen()
-              //       )
-              //   );
-              // }
-              final status = await getLocationPermission(context);
-              if(status == LocationPermissionStatus.granted){
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context)=> PublicChatScreen(channel: WebSocketChannel.connect( Uri.parse('ws://truesurvey.in/ws/chat-discussion/')))));
-                // showDialog(
-                //   context: context,
-                //   builder: (context) => PublicChatDialog(channel: WebSocketChannel.connect( Uri.parse('ws://truesurvey.in/ws/chat-discussion/')),),
-                // );
-              }else{
-                CustomMessageDialog.show(context, title: 'Warning', message: 'Please allow location to access public chat !!');
-              }
-            },
-          ),
-        ],
+      floatingActionButton: Consumer2<AppUser,LoginUser>(
+        builder: (context,appUser,loginUser,child){
+          return SpeedDial(
+            icon: Icons.add,
+            activeIcon: Icons.close,
+            backgroundColor: Colors.deepOrange,
+            foregroundColor: Colors.white,
+            overlayColor: Colors.black,
+            overlayOpacity: 0.3,
+            spacing: 10,
+            spaceBetweenChildren: 8,
+            children: [
+              if(appUser.isLogin)...[
+                SpeedDialChild(
+                  child: const Icon(Icons.map,color: Colors.white,),
+                  backgroundColor: Colors.indigo,
+                  label: loginUser.constituencyName!=null && loginUser.constituencyName?.name != null ? '${loginUser.constituencyName!.name} Query' :'Constituency Query',
+                  labelStyle: const TextStyle(fontSize: 14),
+                  onTap: () {
+                    // _showRaiseProblemDialog(context);
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>WithConstituencyRaiseQueryScreen(constituencyId: loginUser.constituencyName!= null && loginUser.constituencyName?.id != null ? (loginUser.constituencyName?.id).toString():'',)));
+                  },
+                ),
+                SpeedDialChild(
+                  child: const Icon(Icons.forum,color: Colors.white,),
+                  backgroundColor: Colors.deepPurple,
+                  label: loginUser.constituencyName!=null && loginUser.constituencyName?.name != null ? '${loginUser.constituencyName!.name} Chat':'Constituency Chat',
+                  labelStyle: const TextStyle(fontSize: 14),
+                  onTap: () {
+                    // _showRaiseProblemDialog(context);
+                    // Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PublicChatScreen(channel: WebSocketChannel.connect(Uri.parse('')))));
+                    SnackBarHelper.show(context, 'Coming soon Constituency Chat',backgroundColor: Colors.red);
+                  },
+                ),
+              ],
+              SpeedDialChild(
+                child: const Icon(Icons.question_mark,color: Colors.white,),
+                backgroundColor: const Color(0xFF0054D3),
+                label: 'Raise Query',
+                labelStyle: const TextStyle(fontSize: 14),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context)=>WithoutConstituencyRaiseQueryScreen()));
+                },
+              ),
+              SpeedDialChild(
+                child: const Icon(Icons.chat_bubble_outline,color: Colors.white,),
+                backgroundColor: const Color(0xFF00A97F),
+                label: 'Public Chat',
+                labelStyle: const TextStyle(fontSize: 14),
+                onTap: ()async {
+                  final status = await getLocationPermission(context);
+                  if(status == LocationPermissionStatus.granted){
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context)=> PublicChatScreen(channel: WebSocketChannel.connect( Uri.parse('ws://truesurvey.in/ws/chat-discussion/')))));
+                  }else{
+                    CustomMessageDialog.show(context, title: 'Warning', message: 'Please allow location to access public chat !!');
+                  }
+                },
+              ),
+            ],
+          );
+        },
       ),
       onDrawerChanged: (isOpen){
         _faqKey.currentState?.unFocus();
@@ -443,6 +462,7 @@ class _HomeScreenState extends State<HomeScreen> {
           final values = data['data'];
           prefs.setString(Consts.name, '${values['first_name'].toString()} ${values['last_name'].toString()}');
           prefs.setString(Consts.photo,values['photo']??'');
+          context.read<LoginUser>().update(values);
           context.read<AppUser>().update(
             photo: prefs.getString(Consts.photo),
             name: prefs.getString(Consts.name),

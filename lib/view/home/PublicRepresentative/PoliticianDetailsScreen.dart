@@ -6,6 +6,7 @@ import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 
+
 class PoliticianDetails extends StatefulWidget {
   final String id;
   const PoliticianDetails({super.key,required this.id});
@@ -211,7 +212,7 @@ class _PoliticianDetailsState extends State<PoliticianDetails> {
                         ),
                         const SizedBox(height: 8),
                         StarRating(
-                          initialRating: politicianDetails['rating'],
+                          initialRating: politicianDetails['rating'] is double ? (politicianDetails['rating'] as double).toInt(): (politicianDetails['rating'] as int),
                           color: Colors.amber,
                           size: 30,
                           isReadOnly: true,
@@ -440,7 +441,7 @@ class _PoliticianDetailsState extends State<PoliticianDetails> {
 
 class StarRating extends StatefulWidget {
   final int maxStars;
-  final double initialRating;
+  final int initialRating;
   final Color color;
   final double size;
   final bool isReadOnly;
@@ -466,7 +467,7 @@ class _StarRatingState extends State<StarRating> {
   @override
   void initState() {
     super.initState();
-    currentRating = widget.initialRating.toInt();
+    currentRating = widget.initialRating;
   }
 
   @override
@@ -573,7 +574,7 @@ class _PublicReviewsWidgetState extends State<PublicReviewsWidget> {
       final reviews = data['data']??<dynamic>[];
       sortedReviews.addAll(_getSortedReviews(reviews: reviews,sortBy: selectedSort));
       _currentIndex++;
-      _hasNext = data['pagination']['has_next']??false;
+      _hasNext = data['pagination']?['has_next']??false;
     }
     setState(() {
       _isLoading = false;
@@ -882,7 +883,7 @@ class _FeedbackFormState extends State<FeedbackForm> {
             const Text("Rating",
                 style: TextStyle(fontWeight: FontWeight.w600)),
             StarRating(
-              initialRating: _rating.toDouble(),
+              initialRating: _rating,
               color: Colors.amber,
               size: 30,
               isReadOnly: false,

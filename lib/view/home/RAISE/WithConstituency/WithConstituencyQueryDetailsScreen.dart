@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:survey_app/api_service/api_urls.dart';
+import 'package:survey_app/main.dart';
+import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 import 'package:survey_app/widgets/ImageViewer.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
@@ -11,10 +13,11 @@ import 'package:survey_app/widgets/custom_network_image.dart';
 
 
 
-class QueryDetailsScreen extends StatelessWidget {
+class WithConstituencyQueryDetailsScreen extends StatelessWidget {
   final String id;
+  final String constituencyId;
 
-  const QueryDetailsScreen({super.key, required this.id});
+  const WithConstituencyQueryDetailsScreen({super.key, required this.id,required this.constituencyId});
 
   @override
   Widget build(BuildContext context) {
@@ -188,10 +191,11 @@ class QueryDetailsScreen extends StatelessWidget {
 
   Future<Map<String,dynamic>?> _getQueryDetails()async{
     try {
-      final url = Uri.https(Urls.baseUrl,'/api/raise-query/public-create/${id}/view/');
+      final accessToken = prefs.getString(Consts.accessToken)??'';
+      final url = Uri.https(Urls.baseUrl,'/api/raise-query/${constituencyId}/public-create/${id}/view/');
       final response = await get(url,headers: {
+        'Authorization' : 'Bearer ${accessToken}',
         'Content-type' : 'application/json',
-        'Client-source' : 'mobile'
       });
       print('Response Code: ${response.statusCode} , Body: ${response.body}');
       if(response.statusCode == 200){

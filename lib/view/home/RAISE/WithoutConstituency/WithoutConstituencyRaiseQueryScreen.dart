@@ -12,21 +12,24 @@ import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
 import 'package:survey_app/utilities/custom_dialog/CustomMessageDialog.dart';
 import 'package:survey_app/utilities/location_permisson_handler/LocationPermissionHandler.dart';
-import 'package:survey_app/view/home/RAISE/QueryDetailsScreen.dart';
+import 'package:survey_app/view/home/RAISE/WithoutConstituency/WithoutConstituencyQueryDetailsScreen.dart';
 import 'package:survey_app/widgets/ChooseFile.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+import 'WithoutConstituencyResponseScreen.dart';
 
 
 
-class RaiseQueryScreen extends StatefulWidget {
-  const RaiseQueryScreen({super.key});
+class WithoutConstituencyRaiseQueryScreen extends StatefulWidget {
+  const WithoutConstituencyRaiseQueryScreen({super.key});
 
   @override
-  State<RaiseQueryScreen> createState() => _RaiseQueryScreenState();
+  State<WithoutConstituencyRaiseQueryScreen> createState() => _WithoutConstituencyRaiseQueryScreenState();
 }
 
-class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
+class _WithoutConstituencyRaiseQueryScreenState extends State<WithoutConstituencyRaiseQueryScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
   int _currentIndex = 1;
@@ -34,13 +37,25 @@ class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
   List<dynamic> _queries = [];
   late Future<List<dynamic>> _savedTitle ;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
+  final WebSocketChannel _channel = WebSocketChannel.connect(Uri.parse('ws://truesurvey.in/ws/problems/'));
 
   @override
   void initState(){
     _savedTitle = _getSavedTitle();
-    WidgetsBinding.instance.addPostFrameCallback((duration){
+    WidgetsBinding.instance.addPostFrameCallback((duration)async{
       _fetchQueries();
+      await _channel.ready;
+      _channel.stream.listen((value){
+        if(value == null){
+          return;
+        }
+        final jsonData = json.decode(value) as Map<String,dynamic>;
+        final data = jsonData['data'];
+        if(mounted)
+          setState(() {
+            _queries.insert(0, data);
+          });
+      });
     });
     _scrollController.addListener((){
       if(_scrollController.position.pixels == _scrollController.position.maxScrollExtent && !_isLoading && _hasNext){
@@ -54,6 +69,7 @@ class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
   @override
   void dispose() {
     _scrollController.removeListener((){});
+    _channel.sink.close(1000,'Normal Close');
     super.dispose();
   }
 
@@ -125,7 +141,7 @@ class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
                     final query = _queries[index];
                     return GestureDetector(
                       onTap: ()async{
-                        Navigator.of(context).push(MaterialPageRoute(builder: (context)=> QueryDetailsScreen(id: query['id']?.toString()??'')));
+                        Navigator.of(context).push(MaterialPageRoute(builder: (context)=> WithoutConstituencyQueryDetailsScreen(id: query['id']?.toString()??'')));
                       },
                       child: Container(
                         width: double.infinity,
@@ -150,7 +166,6 @@ class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
                                   // ),
                                   // const SizedBox(width: 8,),
                                   Text(query['name']??'Unknown',style: TextStyle(color: Colors.indigo,fontWeight: FontWeight.bold),),
-
                                 ],
                               ),
                               const SizedBox(height: 12,),
@@ -180,13 +195,19 @@ class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: Colors.yellow.shade100,
+                                    color: ((query['problem_status']?['label'] ?? '').toLowerCase() == 'unresolved')
+                                        ? Colors.yellow.shade100
+                                        : Colors.green.shade100
+                                    ,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
                                     query['problem_status']?['label']??'',
                                     style: TextStyle(
-                                      color: Colors.yellow.shade700,
+                                      color: ((query['problem_status']?['label'] ?? '').toLowerCase() == 'unresolved')
+                                          ? Colors.yellow.shade700
+                                          : Colors.green.shade700
+                                      ,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12,
                                     ),
@@ -212,7 +233,15 @@ class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
                                   ],
                                 ),
                                 TextButton.icon(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>WithoutConstituencyResponseScreen(initialRespoCount: int.parse(query['query_solutions']),queryId: query['id']?.toString()??'',onResponseAdd: (value){
+                                      if(mounted){
+                                        setState(() {
+                                          query['query_solutions'] = value.toString();
+                                        });
+                                      }
+                                    },)));
+                                  },
                                   icon: const Icon(Iconsax.message, size: 16, color: Colors.blue),
                                   label: Text(
                                     "${query['query_solutions']??'0'} responses",
@@ -231,7 +260,7 @@ class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
                     );
                   }
               ),
-            ):Expanded(child: Center(child: Text('No Queries Raised Yet.'))),
+            ):_isLoading ? SizedBox.shrink():Expanded(child: Center(child: Text('No Queries Raised Yet.'))),
             if(_isLoading)...[
               Expanded(child: CustomCircularIndicator())
             ],
@@ -256,7 +285,7 @@ class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
       _isLoading = false;
       _currentIndex++;
       _queries = response['data'];
-      _hasNext = response['pagination']['has_next']??false;
+      _hasNext = response['pagination']?['has_next']??false;
     });
   }
 
@@ -356,7 +385,7 @@ class _RaiseQueryScreenState extends State<RaiseQueryScreen> {
                                       items: [
                                         DropdownMenuItem<String>(child: Text('Select title'),value: null,),
                                         if(data != null && data.isNotEmpty)
-                                          ...data.map<DropdownMenuItem<String>>(
+                                          ...data.toSet().map<DropdownMenuItem<String>>(
                                               (e)=> DropdownMenuItem(child: Text(e.toString()),value: e.toString(),)
                                           ).toList()
                                       ],

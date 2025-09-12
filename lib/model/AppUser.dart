@@ -45,7 +45,7 @@ class AppUser with ChangeNotifier {
     this.isActive = isActive ?? this.isActive;
     this.photo = photo ?? this.photo;
     this.isLogin = isLogin??this.isLogin;
-    notifyListeners(); // 🔥 Notify all consumers
+    notifyListeners();
   }
 
   void reset()async{

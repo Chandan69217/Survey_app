@@ -530,6 +530,7 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
         ),
       ),
     );
+
     // return Dialog(
     //   insetPadding: const EdgeInsets.all(20),
     //   backgroundColor: Colors.white,
@@ -806,6 +807,7 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
     //     ),
     //   ),
     // );
+
   }
 
   @override

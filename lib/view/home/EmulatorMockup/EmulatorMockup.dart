@@ -24,6 +24,7 @@ class _EmulatorMockupState extends State<EmulatorMockup>
   late AnimationController _controller;
   late Animation<double> _animation;
 
+
   @override
   void initState() {
     super.initState();
@@ -51,7 +52,7 @@ class _EmulatorMockupState extends State<EmulatorMockup>
       builder: (context,snapshot){
 
         return Container(
-          height: 400,
+          height: 420,
           width: double.infinity,
           color: CustColors.background1,
           child: Center(
@@ -76,6 +77,7 @@ class _EmulatorMockupState extends State<EmulatorMockup>
                     top: 45,
                     left: 30,
                     right: 30,
+                    bottom: 40,
                     child: FutureBuilder(
                       future: _getElectionDetails(),
                       builder: (context,snapshot){
@@ -88,8 +90,8 @@ class _EmulatorMockupState extends State<EmulatorMockup>
                         if(snapshot.hasData && snapshot.data != null){
                           final data = snapshot.data!;
                           final List<dynamic> ElectionName = data['election_name']??<List<dynamic>>[];
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                          return ListView(
+                            shrinkWrap: true,
                             children: [
                               _SliderCard(politicians: data['election_candidate'],),
                               const SizedBox(height: 4,),
@@ -112,7 +114,6 @@ class _EmulatorMockupState extends State<EmulatorMockup>
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: 8,vertical: 12),
                                 width: double.infinity,
-                                height: 85,
                                 decoration: BoxDecoration(
                                     color: Colors.white70,
                                     borderRadius: BorderRadius.circular(8),
@@ -132,16 +133,20 @@ class _EmulatorMockupState extends State<EmulatorMockup>
                                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                           children: [
                                             Icon(Iconsax.wallet,size: 12,color:Colors.white,),
-                                            Text(i['election_date'] != null ? DateFormat("d MMM yyyy").format(DateTime.parse(i['election_date'])): 'ELECTION TIME',style: TextStyle(fontWeight: FontWeight.w700,fontSize: 11,color: Colors.white,),overflow: TextOverflow.ellipsis,maxLines: 1,textAlign: TextAlign.start,),
+                                            Text('ELECTION TIME',style: TextStyle(fontWeight: FontWeight.w700,fontSize: 11,color: Colors.white,),overflow: TextOverflow.ellipsis,maxLines: 1,textAlign: TextAlign.start,),
                                           ],
                                         ),
                                       ),
                                       const SizedBox(height: 4,),
-                                      Text(i['name'] != null ? i['name']:'कोई चुनाव विवरण उपलब्ध नहीं है',style: TextStyle(overflow: TextOverflow.ellipsis,fontSize: 12),maxLines: 2,textAlign: TextAlign.center,)
+                                      Flexible(flex: 2,child: Text(i['name'] != null ? 'चुनाव का नाम: ${i['name']}':'कोई चुनाव विवरण उपलब्ध नहीं है',style: TextStyle(overflow: TextOverflow.ellipsis,fontSize: 12),maxLines: 2,textAlign: TextAlign.center,)),
+                                      if(i['election_date'] != null)
+                                        Flexible(flex:1,child: Text('मतदान तिथि: ${DateFormat("d MMM yyyy").format(DateTime.parse(i['election_date']))}',style: TextStyle(fontSize: 11,),overflow: TextOverflow.ellipsis,maxLines: 1,textAlign: TextAlign.start,)),
                                     ],
                                   )).toList(),
                                   options: CarouselOptions(
-                                    aspectRatio: 2,
+                                    // aspectRatio: 2,
+                                    enlargeCenterPage: false,
+
                                     viewportFraction: 1,
                                       scrollPhysics: const BouncingScrollPhysics(),
                                     autoPlay: ElectionName.isNotEmpty && ElectionName.length != 1
@@ -152,7 +157,7 @@ class _EmulatorMockupState extends State<EmulatorMockup>
                             ],
                           );
                         }else{
-                          return  Text('Nothing to display');
+                          return  Center(child: Text('Nothing to display'));
                         }
                       },
                     ),

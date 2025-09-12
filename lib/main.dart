@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:survey_app/model/LoginUser.dart';
 import 'package:survey_app/providers/LocationFilterData.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/theme/app_theme/app_theme.dart';
@@ -33,6 +34,7 @@ Future<void> main()async {
     MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_)=>AppUser.fromPrefs(data),lazy: false,),
+          ChangeNotifierProvider(create: (_)=>LoginUser(),lazy: false,),
           ChangeNotifierProvider(create: (_){
             final provider = LocationFilterData();
             provider.getInitialData();
