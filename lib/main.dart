@@ -27,7 +27,8 @@ Future<void> main()async {
     Consts.isStaff: prefs.getBool(Consts.isStaff)??false,
     Consts.isActive: prefs.getBool(Consts.isActive)??false,
     Consts.photo: prefs.getString(Consts.photo)??'N/A',
-    Consts.isLogin : prefs.getBool(Consts.isLogin)??false
+    Consts.isLogin : prefs.getBool(Consts.isLogin)??false,
+    Consts.phoneNumber : prefs.getString(Consts.phoneNumber)??'N/A'
   };
   runApp(
     // MyApp()

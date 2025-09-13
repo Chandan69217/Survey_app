@@ -16,6 +16,7 @@ import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/utilities/location_permisson_handler/LocationPermissionHandler.dart';
 import 'package:survey_app/view/auth/CitizenLoginScreen.dart';
 import 'package:survey_app/view/home/AboutUsScreen.dart';
+import 'package:survey_app/view/home/Chats/ConstituencyChat/ConstituencyChatScreen.dart';
 import 'package:survey_app/view/home/EmulatorMockup/EmulatorMockup.dart';
 import 'package:survey_app/view/home/FaqContactScreen.dart';
 import 'package:survey_app/view/home/OurLegendaryLeadersScreen.dart';
@@ -26,7 +27,7 @@ import 'package:survey_app/view/home/RAISE/WithoutConstituency/WithoutConstituen
 import 'package:survey_app/view/home/slider/slider_screen.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'PublicChatDialog/PublicChatScreen.dart';
+import 'Chats/PublicChat/PublicChatScreen.dart';
 import 'PublicRepresentative/PublicRepresentativeSlider.dart';
 import 'RepresentativePartySlider.dart';
 import 'RepresentativeSection.dart';
@@ -243,8 +244,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: loginUser.constituencyName!=null && loginUser.constituencyName?.name != null ? '${loginUser.constituencyName!.name} Query' :'Constituency Query',
                   labelStyle: const TextStyle(fontSize: 14),
                   onTap: () {
-                    // _showRaiseProblemDialog(context);
-                    Navigator.of(context).push(MaterialPageRoute(builder: (context)=>WithConstituencyRaiseQueryScreen(constituencyId: loginUser.constituencyName!= null && loginUser.constituencyName?.id != null ? (loginUser.constituencyName?.id).toString():'',)));
+                    Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context)=>
+                                loginUser.status?.key??false ?
+                                WithConstituencyRaiseQueryScreen(
+                                  constituencyId: loginUser.constituencyName!= null && loginUser.constituencyName?.id != null ? (loginUser.constituencyName?.id).toString():'',)
+                                    : ProfileScreen(),
+                        )
+                    );
+                    if(!(loginUser.status?.key??false)){
+                      CustomMessageDialog.show(context, title: 'Complete Profile', message: 'Complete your profile to chat with your constituency');
+                    }
                   },
                 ),
                 SpeedDialChild(
@@ -253,9 +264,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: loginUser.constituencyName!=null && loginUser.constituencyName?.name != null ? '${loginUser.constituencyName!.name} Chat':'Constituency Chat',
                   labelStyle: const TextStyle(fontSize: 14),
                   onTap: () {
-                    // _showRaiseProblemDialog(context);
-                    // Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PublicChatScreen(channel: WebSocketChannel.connect(Uri.parse('')))));
-                    SnackBarHelper.show(context, 'Coming soon Constituency Chat',backgroundColor: Colors.red);
+                    Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context)=>
+                            loginUser.status?.key??false ?
+                                ConstituencyChatScreen(constituencyId: loginUser.constituencyName!= null && loginUser.constituencyName?.id != null ? (loginUser.constituencyName?.id).toString():'',)
+                                : ProfileScreen()
+                        )
+                    );
+
+                    if(!(loginUser.status?.key??false)){
+                      CustomMessageDialog.show(context, title: 'Complete Profile', message: 'Complete your profile to raise constituency Query.');
+                    }
                   },
                 ),
               ],
@@ -277,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   final status = await getLocationPermission(context);
                   if(status == LocationPermissionStatus.granted){
                     Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context)=> PublicChatScreen(channel: WebSocketChannel.connect( Uri.parse('ws://truesurvey.in/ws/chat-discussion/')))));
+                        builder: (context)=> PublicChatScreen()));
                   }else{
                     CustomMessageDialog.show(context, title: 'Warning', message: 'Please allow location to access public chat !!');
                   }
@@ -340,7 +360,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           OutlinedButton.icon(
                             onPressed: () async{
-                              Navigator.of(context).push(MaterialPageRoute(builder: (context)=>CitizenLoginScreen()));
+                              Navigator.of(context).push(MaterialPageRoute(builder: (context)=>CitizenLoginScreen(
+                                onLoginSuccess: ()async{
+                                  getProfileDetailsFromAPI();
+                                },
+                              )));
                             },
                             icon: Icon(Icons.login),
                             label: Text("Login"),
@@ -377,6 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return ElevatedButton.icon(
                       onPressed: () {
                         context.read<AppUser>().reset();
+                        context.read<LoginUser>().reset();
                         SnackBarHelper.show(context, 'Log Out Successfully');
                         // Navigator.of(context).pop();
                       },

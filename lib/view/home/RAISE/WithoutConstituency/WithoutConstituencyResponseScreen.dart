@@ -16,7 +16,6 @@ import 'package:survey_app/widgets/ImageViewer.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 
-
 class WithoutConstituencyResponseScreen extends StatefulWidget {
   final String queryId;
   final int? initialRespoCount;
@@ -69,7 +68,7 @@ class _WithoutConstituencyResponseScreenState extends State<WithoutConstituencyR
       });
       _getResponse();
     });
-    
+
     _scrollController.addListener((){
       final position = _scrollController.position;
       if(position.pixels == 200 && !_isLoading && _hasNext){
@@ -108,6 +107,7 @@ class _WithoutConstituencyResponseScreenState extends State<WithoutConstituencyR
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
+          controller: _scrollController,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
@@ -288,6 +288,7 @@ class _WithoutConstituencyResponseScreenState extends State<WithoutConstituencyR
 
               // Response card
               !_isLoading ? _responses.isNotEmpty ? ListView.builder(
+
                 physics: NeverScrollableScrollPhysics(),
                 itemCount: _responses.length,
                   shrinkWrap: true,
@@ -421,7 +422,6 @@ class _WithoutConstituencyResponseScreenState extends State<WithoutConstituencyR
 
 
 }
-
 
 
 

@@ -14,7 +14,8 @@ import 'package:survey_app/view/auth/ForgotPasswordScreen.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 
 class CitizenLoginScreen extends StatefulWidget {
-  const CitizenLoginScreen({super.key});
+  final VoidCallback? onLoginSuccess;
+  const CitizenLoginScreen({super.key,this.onLoginSuccess});
 
   @override
   State<CitizenLoginScreen> createState() => _CitizenLoginScreenState();
@@ -290,7 +291,8 @@ class _CitizenLoginScreenState extends State<CitizenLoginScreen> {
           prefs.setBool(Consts.isActive, is_active);
           prefs.setString(Consts.photo, photo);
           prefs.setBool(Consts.isLogin, true);
-
+          prefs.setString(Consts.phoneNumber, _contactNoController.text??'' );
+          widget.onLoginSuccess?.call();
           Provider.of<AppUser>(context, listen: false).update(
             name: name,
             isActive: is_active,

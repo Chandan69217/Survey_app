@@ -10,6 +10,7 @@ import 'package:survey_app/api_service/api_urls.dart';
 import 'package:survey_app/api_service/handle_response.dart';
 import 'package:survey_app/main.dart';
 import 'package:survey_app/model/AppUser.dart';
+import 'package:survey_app/model/LoginUser.dart';
 import 'package:survey_app/providers/LocationFilterData.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
@@ -356,15 +357,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 borderRadius: BorderRadiusGeometry.circular(20)
                             ),
                             avatar: Icon(
-                              status['key']??false ? Iconsax.user_tag : Iconsax.user_remove,
+                              status?['key']??false ? Iconsax.user_tag : Iconsax.user_remove,
                               color: Colors.white,
                             ),
-                            label: Text( status['label']??'',
+                            label: Text( status?['label']??'',
                               // user.isActive ? "Active" : "Inactive",
                               style: const TextStyle(color: Colors.white),
                             ),
                             backgroundColor:
-                            status['key']??false ? Colors.green : Colors.redAccent,
+                            status?['key']??false ? Colors.green : Colors.redAccent,
                           ),
                         ),
                       ]
@@ -518,6 +519,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             photo: prefs.getString(Consts.photo),
             name: prefs.getString(Consts.name),
           );
+          context.read<LoginUser>().update(values);
           return values;
         }
       }else{

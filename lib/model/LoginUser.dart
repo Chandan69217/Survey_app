@@ -10,7 +10,7 @@ class LoginUser with ChangeNotifier{
   String? lastName;
   String? email;
   String? phoneNumber;
-  Data? status;
+  Status? status;
   String? photo;
   dynamic role;
   ConstituencyName? constituencyName;
@@ -28,7 +28,7 @@ class LoginUser with ChangeNotifier{
     this.lastName = json["last_name"];
     this.email = json["email"];
     this.phoneNumber = json["phone_number"];
-    this.status = json["status"] == null ? null : Data.fromJson(json["status"]);
+    this.status = json["status"] == null ? null : Status.fromJson(json["status"]);
     this.photo = json["photo"];
     this.role = json["role"];
     this.constituencyName = json["constituency_name"] == null ? null : ConstituencyName.fromJson(json["constituency_name"]);
@@ -47,7 +47,7 @@ class LoginUser with ChangeNotifier{
     this.lastName = json["last_name"];
     this.email = json["email"];
     this.phoneNumber = json["phone_number"];
-    this.status = json["status"] == null ? null : Data.fromJson(json["status"]);
+    this.status = json["status"] == null ? null : Status.fromJson(json["status"]);
     this.photo = json["photo"];
     this.role = json["role"];
     this.constituencyName = json["constituency_name"] == null
@@ -62,7 +62,42 @@ class LoginUser with ChangeNotifier{
     notifyListeners();
   }
 
+  void reset(){
+    this.id = null;
+    this.firstName = null;
+    this.lastName = null;
+    this.email = null;
+    this.phoneNumber = null;
+    this.status = null;
+    this.photo = null;
+    this.role = null;
+    this.constituencyName = null;
+    this.state = null;
+    this.district = null;
+    this.city = null;
+    this.pinCode = null;
+    this.address = null;
+    this.appName = null;
+    notifyListeners();
+  }
 
+
+}
+
+
+class Status{
+  final bool? key;
+  final String? label;
+  Status({
+    required this.key,
+    required this.label,
+});
+  factory Status.fromJson(Map<String,dynamic> json){
+    return Status(
+        key: json['key'],
+        label: json['label'],
+    );
+  }
 }
 
 

@@ -12,6 +12,7 @@ class AppUser with ChangeNotifier {
   bool isActive = false;
   bool isLogin = false;
   String? photo = 'N/A';
+  String? phoneNumber;
 
 
   AppUser.fromPrefs(Map<String, dynamic> data) {
@@ -23,6 +24,7 @@ class AppUser with ChangeNotifier {
     isActive = data[Consts.isActive] ?? false;
     isLogin = data[Consts.isLogin]??false;
     photo = data[Consts.photo]??'N/A';
+    phoneNumber = data[Consts.phoneNumber]??'N/A';
   }
 
   AppUser();
@@ -35,7 +37,8 @@ class AppUser with ChangeNotifier {
     bool? isStaff,
     bool? isActive,
     String? photo,
-    bool? isLogin
+    bool? isLogin,
+    String? phoneNumber,
   }) {
     this.isOnBoarded = isOnBoarded ?? this.isOnBoarded;
     this.performed = performed ?? this.performed;
@@ -45,6 +48,7 @@ class AppUser with ChangeNotifier {
     this.isActive = isActive ?? this.isActive;
     this.photo = photo ?? this.photo;
     this.isLogin = isLogin??this.isLogin;
+    this.phoneNumber = phoneNumber??this.phoneNumber;
     notifyListeners();
   }
 
@@ -57,6 +61,7 @@ class AppUser with ChangeNotifier {
     this.isOnBoarded = true;
     this.isStaff = false;
     this.isActive = false;
+    this.phoneNumber = 'N/A';
     await prefs.clear();
     prefs.setBool(Consts.isOnBoarded, true);
     notifyListeners();
@@ -71,6 +76,7 @@ class AppUser with ChangeNotifier {
       'is_staff': isStaff,
       'is_active': isActive,
       'photo': photo,
+      'phone_number' : phoneNumber,
     };
   }
 

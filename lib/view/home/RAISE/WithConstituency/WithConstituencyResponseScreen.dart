@@ -34,8 +34,11 @@ class _WithConstituencyResponseScreenState extends State<WithConstituencyRespons
   late final AnimationController _animationController;
   late final Animation<double> _extendedAnimation;
   late final WebSocketChannel _channel;
+  final ScrollController _scrollController = ScrollController();
   List<dynamic> _responses = [];
   int _responseCount = 0;
+  int _currentPage = 1;
+  bool _hasNext = true;
   bool _isLoading = false;
   bool _showFeedbackForm = false;
   late final String deviceId;
@@ -69,6 +72,14 @@ class _WithConstituencyResponseScreenState extends State<WithConstituencyRespons
       // });
       _getResponse();
     });
+
+   _scrollController.addListener((){
+     final position = _scrollController.position;
+     if(position.pixels == 200 && !_isLoading && _hasNext){
+       _getResponse();
+     }
+   });
+
     _responseCount = widget.initialRespoCount!;
     _animationController = AnimationController(vsync: this,duration: Duration(microseconds: 600));
     _extendedAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
@@ -78,6 +89,7 @@ class _WithConstituencyResponseScreenState extends State<WithConstituencyRespons
   @override
   void dispose() {
     // _channel.sink.close(1000,'Normal Close');
+    _scrollController.removeListener((){});
     super.dispose();
   }
 
@@ -100,6 +112,7 @@ class _WithConstituencyResponseScreenState extends State<WithConstituencyRespons
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
+          controller: _scrollController,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
@@ -371,7 +384,9 @@ class _WithConstituencyResponseScreenState extends State<WithConstituencyRespons
     try{
       final accessToken = prefs.getString(Consts.accessToken)??'';
       final uri = Uri.https(
-        Urls.baseUrl,'/api/soultion-query/${widget.queryId}/${widget.constituencyId}/public-create/list/'
+        Urls.baseUrl,'/api/soultion-query/${widget.queryId}/${widget.constituencyId}/public-create/list/',{
+          'page' : _currentPage.toString()
+      }
       );
 
 
@@ -395,6 +410,8 @@ class _WithConstituencyResponseScreenState extends State<WithConstituencyRespons
           if(data != null){
             _responses.addAll(data);
           }
+          _currentPage++;
+          _hasNext =  data['pagination']?['has_next']??false;
         }
       }
       

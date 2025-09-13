@@ -35,6 +35,8 @@ class WithConstituencyRaiseQueryScreen extends StatefulWidget {
 class _WithConstituencyRaiseQueryScreenState extends State<WithConstituencyRaiseQueryScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
+  int _currentIndex = 1;
+  bool _hasNext = true;
   List<dynamic> _queries = [];
   late Future<List<dynamic>> _savedTitle ;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -63,11 +65,11 @@ class _WithConstituencyRaiseQueryScreenState extends State<WithConstituencyRaise
       //     });
       // });
     });
-    // _scrollController.addListener((){
-    //   if(_scrollController.position.pixels == _scrollController.position.maxScrollExtent && !_isLoading && _hasNext){
-    //     _fetchQueries();
-    //   }
-    // });
+    _scrollController.addListener((){
+      if(_scrollController.position.pixels == _scrollController.position.maxScrollExtent && !_isLoading && _hasNext){
+        _fetchQueries();
+      }
+    });
     super.initState();
   }
 
@@ -294,7 +296,9 @@ class _WithConstituencyRaiseQueryScreenState extends State<WithConstituencyRaise
     }
     setState(() {
       _isLoading = false;
+      _currentIndex++;
       _queries = response['data'];
+      _hasNext = response['pagination']?['has_next']??false;
     });
   }
 
@@ -302,7 +306,9 @@ class _WithConstituencyRaiseQueryScreenState extends State<WithConstituencyRaise
   Future<Map<String,dynamic>?> _getAllRaisedQuery()async{
     try{
       final accessToken = prefs.getString(Consts.accessToken)??'';
-      final url = Uri.https(Urls.baseUrl,'/api/raise-query/${widget.constituencyId}/public-create/list/');
+      final url = Uri.https(Urls.baseUrl,'/api/raise-query/${widget.constituencyId}/public-create/list/',{
+        'page' : _currentIndex.toString()
+      });
       final response = await get(url,headers: {
         'Authorization' : 'Bearer ${accessToken}',
         'Content-type' : 'application/json',
