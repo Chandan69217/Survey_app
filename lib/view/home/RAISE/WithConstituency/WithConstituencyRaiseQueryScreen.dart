@@ -7,14 +7,12 @@ import 'package:http/http.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:survey_app/api_service/api_urls.dart';
-import 'package:survey_app/api_service/handle_response.dart';
 import 'package:survey_app/main.dart';
 import 'package:survey_app/model/LoginUser.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
 import 'package:survey_app/utilities/custom_dialog/CustomMessageDialog.dart';
 import 'package:survey_app/utilities/location_permisson_handler/LocationPermissionHandler.dart';
-import 'package:survey_app/view/home/RAISE/WithoutConstituency/WithoutConstituencyQueryDetailsScreen.dart';
 import 'package:survey_app/widgets/ChooseFile.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
 import 'package:survey_app/widgets/custom_network_image.dart';
@@ -40,30 +38,31 @@ class _WithConstituencyRaiseQueryScreenState extends State<WithConstituencyRaise
   List<dynamic> _queries = [];
   late Future<List<dynamic>> _savedTitle ;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  // late final WebSocketChannel _channel;
+  late final WebSocketChannel _channel;
 
   @override
   void initState(){
     _savedTitle = _getSavedTitle();
     WidgetsBinding.instance.addPostFrameCallback((duration)async{
       _fetchQueries();
-      // try{
-      //   _channel = WebSocketChannel.connect(Uri.parse('ws://truesurvey.in/ws/problems-constituency/3/'));
-      //   await _channel.ready;
-      // }catch(expetion){
-      //   print('Exception: $expetion');
-      // }
-      // _channel.stream.listen((value){
-      //   if(value == null){
-      //     return;
-      //   }
-      //   final jsonData = json.decode(value) as Map<String,dynamic>;
-      //   final data = jsonData['data'];
-      //   if(mounted)
-      //     setState(() {
-      //       _queries.insert(0, data);
-      //     });
-      // });
+      try{
+        final _accessToken = prefs.getString(Consts.accessToken)??'';
+        _channel = WebSocketChannel.connect(Uri.parse('ws://truesurvey.in/ws/problems-constituency/${widget.constituencyId}/?token=${_accessToken}'));
+        await _channel.ready;
+        _channel.stream.listen((value){
+          if(value == null){
+            return;
+          }
+          final jsonData = json.decode(value) as Map<String,dynamic>;
+          final data = jsonData['data'];
+          if(mounted)
+            setState(() {
+              _queries.insert(0, data);
+            });
+        });
+      }catch(expetion){
+        print('Exception: $expetion');
+      }
     });
     _scrollController.addListener((){
       if(_scrollController.position.pixels == _scrollController.position.maxScrollExtent && !_isLoading && _hasNext){
@@ -77,7 +76,7 @@ class _WithConstituencyRaiseQueryScreenState extends State<WithConstituencyRaise
   @override
   void dispose() {
     _scrollController.removeListener((){});
-    // _channel.sink.close(1000,'Normal Close');
+    _channel.sink.close(1000,'Normal Close');
     super.dispose();
   }
 
@@ -148,6 +147,7 @@ class _WithConstituencyRaiseQueryScreenState extends State<WithConstituencyRaise
             _queries.isNotEmpty ? Expanded(
               child: ListView.builder(
                   shrinkWrap: true,
+                  reverse: true,
                   controller: _scrollController,
                   itemCount: _queries.length,
                   itemBuilder: (context,index){

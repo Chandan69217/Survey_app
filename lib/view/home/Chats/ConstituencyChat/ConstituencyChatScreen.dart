@@ -82,32 +82,32 @@ class _ConstituencyChatScreenState extends State<ConstituencyChatScreen> {
         final deviceInfo = await deviceInfoPlugin.deviceInfo;
         deviceId = deviceInfo.data['id'] ?? '';
         final accessToken = prefs.getString(Consts.accessToken)??'';
-        // final wsUrl = Uri.parse('ws://truesurvey.in/ws/chat-discussion-constituency/${widget.constituencyId}/?token=${accessToken}');
-        // _channel = WebSocketChannel.connect(wsUrl);
+        final wsUrl = Uri.parse('ws://truesurvey.in/ws/chat-discussion-constituency/${widget.constituencyId}/?token=${accessToken}');
+        _channel = WebSocketChannel.connect(wsUrl);
 
         // Listen once
-        // _channel.stream.listen((data) {
-        //   final decoded = json.decode(data) as Map<String, dynamic>;
-        //   if(decoded['event'] == 'deleted'){
-        //     final id = decoded['data']['id'];
-        //     final index = _message.indexWhere((m)=>m.id == id);
-        //     if(index != -1){
-        //       if(mounted){
-        //         setState(() {
-        //           _message.removeAt(index);
-        //         });
-        //       }
-        //     }
-        //     return;
-        //   }
-        //   final newMsg = ChatMessage.fromJson(decoded['data']);
-        //   if(newMsg.deviceID != deviceId){
-        //     if(mounted)
-        //     setState(() {
-        //       _message.insert(0, newMsg);
-        //     });
-        //   }
-        // });
+        _channel.stream.listen((data) {
+          final decoded = json.decode(data) as Map<String, dynamic>;
+          if(decoded['event'] == 'deleted'){
+            final id = decoded['data']['id'];
+            final index = _message.indexWhere((m)=>m.id == id);
+            if(index != -1){
+              if(mounted){
+                setState(() {
+                  _message.removeAt(index);
+                });
+              }
+            }
+            return;
+          }
+          final newMsg = ChatMessage.fromJson(decoded['data']);
+          if(newMsg.deviceID != deviceId){
+            if(mounted)
+            setState(() {
+              _message.insert(0, newMsg);
+            });
+          }
+        });
       } catch (exception, trace) {
         print('Exception: $exception, Trace: $trace');
       }
@@ -532,7 +532,7 @@ class _ConstituencyChatScreenState extends State<ConstituencyChatScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
-    // _channel.sink.close(1000, 'NORMAL_CLOSER');
+    _channel.sink.close(1000, 'NORMAL_CLOSER');
     _statementController.dispose();
     _statementFocusNode.unfocus();
     super.dispose();

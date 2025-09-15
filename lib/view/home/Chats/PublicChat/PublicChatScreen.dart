@@ -1,13 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/http.dart';
-import 'package:http_parser/http_parser.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:survey_app/api_service/PublicChatAPIService.dart';
@@ -15,15 +9,14 @@ import 'package:survey_app/main.dart';
 import 'package:survey_app/model/chat_model/ChatMessage.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/utilities/cust_colors.dart';
-import 'package:survey_app/utilities/custom_dialog/SnackBarHelper.dart';
 import 'package:survey_app/view/home/Chats/ChatMessageCard.dart';
 import 'package:survey_app/view/home/Chats/MediaPickerScreen.dart';
 import 'package:survey_app/view/home/Chats/MediaPreviewScreen.dart';
 import 'package:survey_app/widgets/CustomCircularIndicator.dart';
-import 'package:survey_app/widgets/custom_network_image.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:path/path.dart' as p;
-import 'package:video_player/video_player.dart';
+
+
+
 
 class PublicChatScreen extends StatefulWidget {
   const PublicChatScreen({super.key,});

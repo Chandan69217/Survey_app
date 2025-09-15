@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
-import 'package:survey_app/api_service/PoliticianDetailsAPI.dart' show PoliticianDetailsAPI;
 import 'package:survey_app/api_service/api_urls.dart';
 import 'package:survey_app/main.dart';
 import 'package:survey_app/utilities/consts.dart';
@@ -53,23 +52,25 @@ class _WithConstituencyResponseScreenState extends State<WithConstituencyRespons
      deviceId = deviceInfo['id'];
    });
     WidgetsBinding.instance.addPostFrameCallback((duration)async{
-      // _channel = WebSocketChannel.connect(Uri.parse('ws://truesurvey.in/ws/problems-solution/${widget.queryId}/'));
-      // await _channel.ready;
-      // _channel.stream.listen((value){
-      //   if(value == null){
-      //     return;
-      //   }
-      //   final jsonData = json.decode(value) as Map<String,dynamic>;
-      //   print('Socket Received : $jsonData');
-      //   if(mounted)
-      //     setState(() {
-      //       _responses.insert(0, jsonData['data']);
-      //       widget.onResponseAdd?.call(++_responseCount);
-      //     });
-      //   // if(jsonData['event'].toLowercase() == 'created'){
-      //   //
-      //   // }
-      // });
+      try{
+        final _accessToken = prefs.getString(Consts.accessToken)??'';
+        _channel = WebSocketChannel.connect(Uri.parse('ws://truesurvey.in/ws/problems-solution/${widget.queryId}/${widget.constituencyId}/?token=${_accessToken}'));
+        await _channel.ready;
+        _channel.stream.listen((value){
+          if(value == null){
+            return;
+          }
+          final jsonData = json.decode(value) as Map<String,dynamic>;
+          print('Socket Received : $jsonData');
+          if(mounted)
+            setState(() {
+              _responses.insert(0, jsonData['data']);
+              widget.onResponseAdd?.call(++_responseCount);
+            });
+        });
+      }catch(exception,trace){
+        print("exception: ${exception}, Trace: ${trace}");
+      }
       _getResponse();
     });
 
@@ -88,7 +89,7 @@ class _WithConstituencyResponseScreenState extends State<WithConstituencyRespons
 
   @override
   void dispose() {
-    // _channel.sink.close(1000,'Normal Close');
+    _channel.sink.close(1000,'Normal Close');
     _scrollController.removeListener((){});
     super.dispose();
   }
