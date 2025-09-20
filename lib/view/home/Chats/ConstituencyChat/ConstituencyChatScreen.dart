@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -29,12 +30,11 @@ class ConstituencyChatScreen extends StatefulWidget {
 }
 
 
-class _ConstituencyChatScreenState extends State<ConstituencyChatScreen> {
+class _ConstituencyChatScreenState extends State<ConstituencyChatScreen> with WidgetsBindingObserver{
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _message = [];
   final Map<String,ValueNotifier<double>> progressValues = {};
-
-  late final WebSocketChannel _channel;
+  WebSocketChannel? _channel;
   int _currentPage = 1;
   bool _isLoading = false;
   bool _hasNext = true;
@@ -44,6 +44,11 @@ class _ConstituencyChatScreenState extends State<ConstituencyChatScreen> {
   final FocusNode _statementFocusNode = FocusNode();
   final _messageInputKey = GlobalKey();
   late final String userPhoneNumber;
+  late final String accessToken;
+  Size? _inputSize;
+  StreamSubscription? _subscription;
+
+
   void _fetchMessages() async {
     setState(() {
       _isLoading = true;
@@ -70,58 +75,157 @@ class _ConstituencyChatScreenState extends State<ConstituencyChatScreen> {
     });
   }
 
-
   @override
   void initState() {
     super.initState();
     userPhoneNumber = prefs.getString(Consts.phoneNumber)??'';
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    accessToken = prefs.getString(Consts.accessToken) ?? '';
+    WidgetsBinding.instance.addObserver(this);
+
+    WidgetsBinding.instance.addPostFrameCallback((duration)async{
       _fetchMessages();
-
-      try {
-        final deviceInfo = await deviceInfoPlugin.deviceInfo;
-        deviceId = deviceInfo.data['id'] ?? '';
-        final accessToken = prefs.getString(Consts.accessToken)??'';
-        final wsUrl = Uri.parse('ws://truesurvey.in/ws/chat-discussion-constituency/${widget.constituencyId}/?token=${accessToken}');
-        _channel = WebSocketChannel.connect(wsUrl);
-
-        // Listen once
-        _channel.stream.listen((data) {
-          final decoded = json.decode(data) as Map<String, dynamic>;
-          if(decoded['event'] == 'deleted'){
-            final id = decoded['data']['id'];
-            final index = _message.indexWhere((m)=>m.id == id);
-            if(index != -1){
-              if(mounted){
-                setState(() {
-                  _message.removeAt(index);
-                });
-              }
-            }
-            return;
-          }
-          final newMsg = ChatMessage.fromJson(decoded['data']);
-          if(newMsg.deviceID != deviceId){
-            if(mounted)
-            setState(() {
-              _message.insert(0, newMsg);
-            });
-          }
-        });
-      } catch (exception, trace) {
-        print('Exception: $exception, Trace: $trace');
-      }
+      final deviceInfo = await deviceInfoPlugin.deviceInfo;
+      deviceId = deviceInfo.data['id'] ?? '';
+      _initSocket();
     });
 
     _scrollController.addListener(() async {
       if (_scrollController.position.pixels >=
-              _scrollController.position.maxScrollExtent - 200 &&
+          _scrollController.position.maxScrollExtent - 200 &&
           !_isLoading &&
           _hasNext) {
         _fetchMessages();
       }
     });
   }
+
+
+  void _initSocket() {
+
+    try{
+      _subscription?.cancel();
+      _channel?.sink.close();
+
+      final wsUrl = Uri.parse(
+        'ws://truesurvey.in/ws/chat-discussion-constituency/${widget.constituencyId}/?token=$accessToken',
+      );
+      _channel = WebSocketChannel.connect(wsUrl);
+
+      _subscription = _channel?.stream.listen(
+            (data) {
+          final decoded = json.decode(data) as Map<String, dynamic>;
+
+          if (decoded['event'] == 'deleted') {
+            final id = decoded['data']['id'];
+            final index = _message.indexWhere((m) => m.id == id);
+            if (index != -1 && mounted) {
+              setState(() => _message.removeAt(index));
+            }
+            return;
+          }
+
+          final newMsg = ChatMessage.fromJson(decoded['data']);
+          if (newMsg.deviceID != deviceId && mounted) {
+            setState(() => _message.insert(0, newMsg));
+          }
+        },
+        onDone: () {
+          print("Socket closed");
+        },
+        onError: (error) {
+          print("Socket error: $error");
+        },
+      );
+    }catch(exception,trace){
+      print('Exception: ${exception}, Trace: ${trace}');
+    }
+  }
+
+
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _subscription?.cancel();
+      _channel?.sink.close();
+    } else if (state == AppLifecycleState.resumed) {
+      _refreshOnResume();
+      _initSocket();
+    }
+  }
+
+  void _refreshOnResume()async{
+    _currentPage = 1;
+    final response = await ConstituencyChatAPIService.getAllConstituencyChat(
+      constituencyId: widget.constituencyId,
+      page: _currentPage.toString(),
+    );
+    if (response == null) {
+      return;
+    }
+    final List<ChatMessage> _newMessages = (response['data'] as List)
+        .map((json) => ChatMessage.fromJson(json))
+        .toList();
+    setState(() {
+      _message.clear();
+      _message.addAll(_newMessages);
+      _hasNext = response['pagination']?['has_next'] ?? false;
+      _currentPage++;
+    });
+  }
+
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   userPhoneNumber = prefs.getString(Consts.phoneNumber)??'';
+  //   WidgetsBinding.instance.addPostFrameCallback((_) async {
+  //     _fetchMessages();
+  //
+  //     try {
+  //       final deviceInfo = await deviceInfoPlugin.deviceInfo;
+  //       deviceId = deviceInfo.data['id'] ?? '';
+  //       final accessToken = prefs.getString(Consts.accessToken)??'';
+  //       final wsUrl = Uri.parse('ws://truesurvey.in/ws/chat-discussion-constituency/${widget.constituencyId}/?token=${accessToken}');
+  //       _channel = WebSocketChannel.connect(wsUrl);
+  //
+  //       // Listen once
+  //       _channel.stream.listen((data) {
+  //         final decoded = json.decode(data) as Map<String, dynamic>;
+  //         if(decoded['event'] == 'deleted'){
+  //           final id = decoded['data']['id'];
+  //           final index = _message.indexWhere((m)=>m.id == id);
+  //           if(index != -1){
+  //             if(mounted){
+  //               setState(() {
+  //                 _message.removeAt(index);
+  //               });
+  //             }
+  //           }
+  //           return;
+  //         }
+  //         final newMsg = ChatMessage.fromJson(decoded['data']);
+  //         if(newMsg.deviceID != deviceId){
+  //           if(mounted)
+  //           setState(() {
+  //             _message.insert(0, newMsg);
+  //           });
+  //         }
+  //       });
+  //     } catch (exception, trace) {
+  //       print('Exception: $exception, Trace: $trace');
+  //     }
+  //   });
+  //
+  //   _scrollController.addListener(() async {
+  //     if (_scrollController.position.pixels >=
+  //             _scrollController.position.maxScrollExtent - 200 &&
+  //         !_isLoading &&
+  //         _hasNext) {
+  //       _fetchMessages();
+  //     }
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -171,14 +275,19 @@ class _ConstituencyChatScreenState extends State<ConstituencyChatScreen> {
                                 return Builder(
                                   builder: (cardContext) {
                                     if (0 == index) {
-                                      final RenderBox box =
-                                          _messageInputKey.currentContext!
-                                                  .findRenderObject()
-                                              as RenderBox;
-                                      final size = box.size;
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        final box = _messageInputKey.currentContext?.findRenderObject() as RenderBox?;
+                                        if (box != null) {
+                                          final size = box.size;
+                                          setState(() {
+                                            _inputSize = size;
+                                          });
+                                        }
+                                      });
+
                                       return SizedBox(
-                                        height: size.height,
-                                        width: size.width,
+                                        height: _inputSize?.height??0,
+                                        width: _inputSize?.width??0,
                                       );
                                     }
                                     final msgIndex = index - 1;
@@ -477,37 +586,35 @@ class _ConstituencyChatScreenState extends State<ConstituencyChatScreen> {
                                     });
 
                                     // Send to API
-                                    final id =
-                                        await ConstituencyChatAPIService.sendMessageWithoutFile(
-                                          constituencyId: widget.constituencyId,
-                                          statement: statement,
-                                          deviceId: deviceId,
-                                        );
-
-                                    if(id != null){
-                                      final tempIndex = _message.indexWhere(
-                                            (m) =>
-                                        m.deviceID == tempMsg.deviceID &&
-                                            m.id == tempMsg.id &&
-                                            (m.statement == tempMsg.statement || m.document == tempMsg.document) &&
-                                            m.status == MessageStatus.sending,
+                                    try{
+                                      final id =
+                                      await ConstituencyChatAPIService.sendMessageWithoutFile(
+                                        constituencyId: widget.constituencyId,
+                                        statement: statement,
+                                        deviceId: deviceId,
                                       );
 
-                                      if (tempIndex != -1) {
-                                        setState(() {
-                                          _message[tempIndex].update(id:id,status: MessageStatus.sent,);
-                                        });
-                                      }
-
-                                    }else {
-                                      setState(() {
-                                        final index = _message.indexWhere(
-                                          (m) => m.id == tempId,
+                                      if(id != null){
+                                        final tempIndex = _message.indexWhere(
+                                              (m) =>
+                                          m.deviceID == tempMsg.deviceID &&
+                                              m.id == tempMsg.id &&
+                                              (m.statement == tempMsg.statement || m.document == tempMsg.document) &&
+                                              m.status == MessageStatus.sending,
                                         );
-                                        if (index != -1) {
-                                          _message[index].update(status: MessageStatus.failed);
+
+                                        if (tempIndex != -1) {
+                                          setState(() {
+                                            _message[tempIndex].update(id:id,status: MessageStatus.sent,);
+                                          });
                                         }
-                                      });
+
+                                      }else {
+                                        _markMessageFailed(tempId);
+                                      }
+                                    }catch(exception,trace){
+                                      print('Exception: ${exception}, Trace: ${trace}');
+                                      _markMessageFailed(tempId);
                                     }
                                   },
                                 ),
@@ -529,12 +636,24 @@ class _ConstituencyChatScreenState extends State<ConstituencyChatScreen> {
 
   }
 
+
+  void _markMessageFailed(int tempId) {
+    final idx = _message.indexWhere((m) => m.id == tempId);
+    if (idx != -1) {
+      setState(() {
+        _message[idx].update(status: MessageStatus.failed);
+      });
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
-    _channel.sink.close(1000, 'NORMAL_CLOSER');
+    _channel?.sink.close(1000, 'NORMAL_CLOSER');
+    _subscription?.cancel();
     _statementController.dispose();
     _statementFocusNode.unfocus();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 

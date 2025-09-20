@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:survey_app/api_service/api_urls.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/main.dart';
+import 'package:survey_app/utilities/location_permisson_handler/LocationCached.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
@@ -224,21 +225,21 @@ class PublicChatAPIService {
     return null;
   }
 
+
+
   static Future<int?> sendMessageWithoutFile({
     required String statement,
     required String deviceId,
   }) async {
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
-    );
-    final latitude = position.latitude;
-    final longitude = position.longitude;
+    await LocationCache.init();
+    final latitude = LocationCache.lat ?? 0.0;
+    final longitude = LocationCache.lng ?? 0.0;
     try {
       final url = Uri.https(Urls.baseUrl, Urls.public_chat_entry);
       final request = http.MultipartRequest('POST', url)
         ..headers.addAll({
           'Client-source': 'mobile',
-          'Cotent-type': 'application/json',
+          'Content-type': 'application/json',
         })
         ..fields['statement'] = statement
         ..fields['device_id'] = deviceId
@@ -266,6 +267,8 @@ class PublicChatAPIService {
     }
     return null;
   }
+
+
 
   static Future<bool> deleteMessage({
     required String messageId,
@@ -303,11 +306,9 @@ class PublicChatAPIService {
     required String deviceId,
     required String sessionID,
   }) async {
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
-    );
-    final latitude = position.latitude;
-    final longitude = position.longitude;
+    await LocationCache.init();
+    final latitude = LocationCache.lat ?? 0.0;
+    final longitude = LocationCache.lng ?? 0.0;
     try {
       final url = Uri.https(
         Urls.baseUrl,

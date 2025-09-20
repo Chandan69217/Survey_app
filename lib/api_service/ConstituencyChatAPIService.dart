@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:survey_app/api_service/api_urls.dart';
 import 'package:survey_app/utilities/consts.dart';
 import 'package:survey_app/main.dart';
+import 'package:survey_app/utilities/location_permisson_handler/LocationCached.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
@@ -231,11 +232,9 @@ class ConstituencyChatAPIService {
     required String statement,
     required String deviceId,
   }) async {
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
-    );
-    final latitude = position.latitude;
-    final longitude = position.longitude;
+    await LocationCache.init();
+    final latitude = LocationCache.lat ?? 0.0;
+    final longitude = LocationCache.lng ?? 0.0;
     try {
       final accessToken = prefs.getString(Consts.accessToken)??'';
       final url = Uri.https(Urls.baseUrl, '/api/chat-discussion/${constituencyId}/public-create/');
@@ -310,11 +309,9 @@ class ConstituencyChatAPIService {
     required String deviceId,
     required String sessionID,
   }) async {
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
-    );
-    final latitude = position.latitude;
-    final longitude = position.longitude;
+    await LocationCache.init();
+    final latitude = LocationCache.lat ?? 0.0;
+    final longitude = LocationCache.lng ?? 0.0;
     try {
       final accessToken = prefs.getString(Consts.accessToken)??'';
       final url = Uri.https(

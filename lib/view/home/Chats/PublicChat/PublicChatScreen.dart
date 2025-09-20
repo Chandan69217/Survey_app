@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -25,17 +26,17 @@ class PublicChatScreen extends StatefulWidget {
   State<PublicChatScreen> createState() => _PublicChatScreenState();
 }
 
-class _PublicChatScreenState extends State<PublicChatScreen> {
+class _PublicChatScreenState extends State<PublicChatScreen> with WidgetsBindingObserver{
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _message = [];
   final Map<String,ValueNotifier<double>> progressValues = {};
-
   static Uri _wsURL = Uri.parse('ws://truesurvey.in/ws/chat-discussion/');
-  late final WebSocketChannel _channel;
+  WebSocketChannel? _channel;
+  StreamSubscription? _subscription;
   int _currentPage = 1;
   bool _isLoading = false;
   bool _hasNext = true;
-  late final String deviceId;
+  late String deviceId;
   final DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
   final TextEditingController _statementController = TextEditingController();
   final FocusNode _statementFocusNode = FocusNode();
@@ -67,6 +68,42 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
     });
   }
 
+  void _initSocket()async{
+    try {
+
+      _subscription?.cancel();
+      _channel?.sink.close();
+
+      _channel = WebSocketChannel.connect(_wsURL);
+
+      // Listen once
+      _channel?.stream.listen((data) {
+        final decoded = json.decode(data) as Map<String, dynamic>;
+        if(decoded['event'] == 'deleted'){
+          final id = decoded['data']['id'];
+          final index = _message.indexWhere((m)=>m.id == id);
+          if(index != -1){
+            if(mounted){
+              setState(() {
+                _message.removeAt(index);
+              });
+            }
+          }
+          return;
+        }
+        final newMsg = ChatMessage.fromJson(decoded['data']);
+        if(newMsg.deviceID != deviceId){
+          if(mounted)
+            setState(() {
+              _message.insert(0, newMsg);
+            });
+        }
+      });
+    } catch (exception, trace) {
+      print('Exception: $exception, Trace: $trace');
+    }
+  }
+
   // @override
   // void initState() {
   //   WidgetsBinding.instance.addPostFrameCallback((duration)async{
@@ -91,41 +128,13 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    WidgetsBinding.instance.addPostFrameCallback((duration)async{
+      final deviceInfo = await deviceInfoPlugin.deviceInfo;
+      deviceId = deviceInfo.data['id'] ?? '';
       _fetchMessages();
-
-      try {
-        final deviceInfo = await deviceInfoPlugin.deviceInfo;
-        deviceId = deviceInfo.data['id'] ?? '';
-        _channel = WebSocketChannel.connect(_wsURL);
-
-        // Listen once
-        _channel.stream.listen((data) {
-          final decoded = json.decode(data) as Map<String, dynamic>;
-          if(decoded['event'] == 'deleted'){
-            final id = decoded['data']['id'];
-            final index = _message.indexWhere((m)=>m.id == id);
-            if(index != -1){
-              if(mounted){
-                setState(() {
-                  _message.removeAt(index);
-                });
-              }
-            }
-            return;
-          }
-          final newMsg = ChatMessage.fromJson(decoded['data']);
-          if(newMsg.deviceID != deviceId){
-            if(mounted)
-            setState(() {
-              _message.insert(0, newMsg);
-            });
-          }
-        });
-      } catch (exception, trace) {
-        print('Exception: $exception, Trace: $trace');
-      }
+      _initSocket();
     });
 
     _scrollController.addListener(() async {
@@ -378,51 +387,56 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
                                                         progressValues[tempId.toString()] = ValueNotifier<double>(0);
                                                       });
 
-                                                      final File? compressedFile = await PublicChatAPIService.compressVideo(file!);
-                                                      if(compressedFile == null ){
-                                                        final index = _message.indexWhere((m)=> m.deviceID == deviceId && m.id == tempId);
-                                                        if(index != -1){
-                                                          _message[index].update(status: MessageStatus.failed,);
+                                                      try{
+                                                        final File? compressedFile = await PublicChatAPIService.compressVideo(file!);
+                                                        if(compressedFile == null ){
+                                                          final index = _message.indexWhere((m)=> m.deviceID == deviceId && m.id == tempId);
+                                                          if(index != -1){
+                                                            _message[index].update(status: MessageStatus.failed,);
+                                                          }
+                                                          return;
                                                         }
-                                                        return;
-                                                      }
 
-                                                     final sessionId = await PublicChatAPIService.createSession(file: compressedFile);
-                                                     if(sessionId == null){
-                                                       final index = _message.indexWhere((m)=> m.deviceID == deviceId && m.id == tempId);
-                                                       if(index != -1){
-                                                         if(mounted)
-                                                           setState(() {
-                                                             _message[index].update(status: MessageStatus.failed,);
-                                                           });
-                                                       }
-                                                       return;
-                                                     }
+                                                        final sessionId = await PublicChatAPIService.createSession(file: compressedFile);
+                                                        if(sessionId == null){
+                                                          final index = _message.indexWhere((m)=> m.deviceID == deviceId && m.id == tempId);
+                                                          if(index != -1){
+                                                            if(mounted)
+                                                              setState(() {
+                                                                _message[index].update(status: MessageStatus.failed,);
+                                                              });
+                                                          }
+                                                          return;
+                                                        }
 
-                                                     PublicChatAPIService.uploadFile(sessionId: sessionId,file:compressedFile,onProgress: (progress)async{
-                                                       progressValues[tempId.toString()]?.value = progress;
-                                                        if(progress == 1){
-                                                          final id = await PublicChatAPIService.sendMessageWithFile(statement: statement, deviceId: deviceId, sessionID: sessionId);
-                                                          if(id != null){
-                                                            final index = _message.indexWhere((m)=> m.deviceID == deviceId && m.id == tempId);
-                                                            if(index != -1){
-                                                              if(mounted)
-                                                                setState(() {
-                                                                  _message[index].update(status: MessageStatus.sent,id: id);
-                                                                  progressValues.remove(tempId.toString());
-                                                                });
-                                                            }
-                                                          }else{
-                                                            final index = _message.indexWhere((m)=> m.deviceID == deviceId && m.id == tempId);
-                                                            if(index != -1){
-                                                              if(mounted)
-                                                                setState(() {
-                                                                  _message[index].update(status: MessageStatus.failed,);
-                                                                });
+                                                        PublicChatAPIService.uploadFile(sessionId: sessionId,file:compressedFile,onProgress: (progress)async{
+                                                          progressValues[tempId.toString()]?.value = progress;
+                                                          if(progress == 1){
+                                                            final id = await PublicChatAPIService.sendMessageWithFile(statement: statement, deviceId: deviceId, sessionID: sessionId);
+                                                            if(id != null){
+                                                              final index = _message.indexWhere((m)=> m.deviceID == deviceId && m.id == tempId);
+                                                              if(index != -1){
+                                                                if(mounted)
+                                                                  setState(() {
+                                                                    _message[index].update(status: MessageStatus.sent,id: id);
+                                                                    progressValues.remove(tempId.toString());
+                                                                  });
+                                                              }
+                                                            }else{
+                                                              final index = _message.indexWhere((m)=> m.deviceID == deviceId && m.id == tempId);
+                                                              if(index != -1){
+                                                                if(mounted)
+                                                                  setState(() {
+                                                                    _message[index].update(status: MessageStatus.failed,);
+                                                                  });
+                                                              }
                                                             }
                                                           }
-                                                        }
-                                                      });
+                                                        });
+
+                                                      }catch(exception,trace){
+                                                        print('Exception: ${exception}, Trace: ${trace}');
+                                                      }
 
                                                     },
                                                   ),
@@ -480,36 +494,34 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
                                     });
 
                                     // Send to API
-                                    final id =
-                                        await PublicChatAPIService.sendMessageWithoutFile(
-                                          statement: statement,
-                                          deviceId: deviceId,
-                                        );
-
-                                    if(id != null){
-                                      final tempIndex = _message.indexWhere(
-                                            (m) =>
-                                        m.deviceID == tempMsg.deviceID &&
-                                            m.id == tempMsg.id &&
-                                            (m.statement == tempMsg.statement || m.document == tempMsg.document) &&
-                                            m.status == MessageStatus.sending,
+                                    try{
+                                      final id =
+                                      await PublicChatAPIService.sendMessageWithoutFile(
+                                        statement: statement,
+                                        deviceId: deviceId,
                                       );
 
-                                      if (tempIndex != -1) {
-                                        setState(() {
-                                          _message[tempIndex].update(id:id,status: MessageStatus.sent,);
-                                        });
-                                      }
-
-                                    }else {
-                                      setState(() {
-                                        final index = _message.indexWhere(
-                                          (m) => m.id == tempId,
+                                      if(id != null){
+                                        final tempIndex = _message.indexWhere(
+                                              (m) =>
+                                          m.deviceID == tempMsg.deviceID &&
+                                              m.id == tempMsg.id &&
+                                              (m.statement == tempMsg.statement || m.document == tempMsg.document) &&
+                                              m.status == MessageStatus.sending,
                                         );
-                                        if (index != -1) {
-                                          _message[index].update(status: MessageStatus.failed);
+
+                                        if (tempIndex != -1) {
+                                          setState(() {
+                                            _message[tempIndex].update(id:id,status: MessageStatus.sent,);
+                                          });
                                         }
-                                      });
+
+                                      }else {
+                                        _markMessageFailed(tempId);
+                                      }
+                                    }catch(exception,trace){
+                                      print('Exception: ${exception}, Trace: ${trace}');
+                                      _markMessageFailed(tempId);
                                     }
                                   },
                                 ),
@@ -807,12 +819,54 @@ class _PublicChatScreenState extends State<PublicChatScreen> {
 
   }
 
+
+  void _markMessageFailed(int tempId) {
+    final idx = _message.indexWhere((m) => m.id == tempId);
+    if (idx != -1) {
+      setState(() {
+        _message[idx].update(status: MessageStatus.failed);
+      });
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _subscription?.cancel();
+      _channel?.sink.close();
+    } else if (state == AppLifecycleState.resumed) {
+      _refreshOnResume();
+      _initSocket();
+    }
+  }
+
+  void _refreshOnResume()async{
+    _currentPage = 1;
+    final response = await PublicChatAPIService.getAllPublicChat(
+      page: _currentPage.toString(),
+    );
+    if (response == null) {
+      return;
+    }
+    final List<ChatMessage> _newMessages = (response['data'] as List)
+        .map((json) => ChatMessage.fromJson(json))
+        .toList();
+    setState(() {
+      _message.clear();
+      _message.addAll(_newMessages);
+      _hasNext = response['pagination']?['has_next'] ?? false;
+      _currentPage++;
+    });
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
-    _channel.sink.close(1000, 'NORMAL_CLOSER');
+    _channel?.sink.close(1000, 'NORMAL_CLOSER');
     _statementController.dispose();
+    _subscription?.cancel();
     _statementFocusNode.unfocus();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:survey_app/utilities/custom_dialog/CustomMessageDialog.dart';
+import 'package:survey_app/utilities/location_permisson_handler/LocationCached.dart';
 
 
 enum LocationPermissionStatus {
@@ -25,6 +26,7 @@ Future<LocationPermissionStatus> getLocationPermission(BuildContext context) asy
     if (result.isGranted) {
       final alwaysResult = await Permission.locationAlways.request();
       if (alwaysResult.isGranted) {
+        LocationCache.init();
         return LocationPermissionStatus.granted;
       } else {
         return LocationPermissionStatus.denied;
